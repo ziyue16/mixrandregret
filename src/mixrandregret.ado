@@ -1,7 +1,19 @@
 *! mixrandregret 1.1.0 4Mar2022
 *! [aut & dev] Ziyue Zhu  &  Álvaro A. Gutiérrez-Vargas
 
-*  1.1.0:  	-mixrandregret- allows robust and cluster SEs and weights
+/*********************************************************************************
+  ____  __  _   _    ___   ____          __    ___   ___  __   ___   ___  ____  
+ / / /  /    \ /    /__/  ____/  /\  /  /  \  /__/  /__  / _  /__/  /__    /  
+/ / / _/_   _/ \_  /  \  /___/  /  \/  /___/ /  \  /__  /__/ /  \  /__    /   
+ 
+ version 1.1.0:  gf0 ml evaluator that run mixed RRM model
+		
+	-> mixed Random Regret Model (Hensher et al., 2016)
+	
+*********************************************************************************/
+
+*  1.1.0:  	-mixrandregret- allows robust, cluster SEs and weights
+
 
 program mixrandregret
 	version 11
@@ -53,8 +65,11 @@ program Estimate, eclass sortpreserve
 	global group_mata =  "`group'"
 	global alternatives_mata =  "`alternatives'"
 	global cluster_mata =  "`cluster'"
+	global rnd_mata = "`rand'"
+
 	
 	capture mata: mata drop RRM_log() mixRRM_gf0()
+	/* include mata functions from randregret.mata */
 	findfile "mixRRM_gf0.mata"
 	do "`r(fn)'"
 	
@@ -92,10 +107,9 @@ program Estimate, eclass sortpreserve
 		}
 	}
 
-	
 	** Mark the estimation sample **
 	marksample touse
-	markout `touse' `group' `alternatives' `rand' `id' `cluster'
+	markout `touse' `group' `alternatives' `rand' `id' `cluster' 
 
 	** Create locals for later: 
 	gettoken lhs fixed : varlist
@@ -121,8 +135,6 @@ program Estimate, eclass sortpreserve
 		}
 	}
 
-	/* robust, wgt, coll and constraints setting, safe to omit? */
-	
 	** Check for multicollinearity **
 	local rhs `fixed' `rand'
 	if ("`coll'" == "") {
@@ -171,7 +183,75 @@ program Estimate, eclass sortpreserve
 		exit 498		
 	}
 	
-	*** ASC Checks (to be added) ***		
+	** ASC Checks **
+	if "`noconstant'" ==""{ 
+		global cons_demanded = "YES"
+		global neq = 2 /* ml display purposes */
+	}
+	else {
+		global cons_demanded = "NO" 	
+		global neq = 1
+	}
+	
+	** Checking if ASC are demanded and well specified **
+	if "${cons_demanded}" == "YES"{  	
+		/* basealternative(#) , # must be numeric */
+		capture confirm number `basealternative'
+		if _rc == 7 & "`basealternative'"!="" { // basealternative not numeric
+			di in red "In option basealternative(#), # must be numeric." 
+			exit 198
+			}
+		/* basealternative(#) , # must be within values on alternatives() */
+		else {
+			qui levelsof `alternatives', miss local(mylevs)
+			loc check_base_altern = strpos("`mylevs'", "`basealternative'")
+			if `check_base_altern' == 0 {
+				di in red "Variable in alternatives() does not contain basealternative(#) provided " 
+				exit 198
+				}
+			}
+			
+		** Generate ASC as tempvars **
+		qui levelsof `alternatives', local(levels_altern)
+		tempvar ASC_
+		foreach i of local levels_altern {
+			tempvar ASC_`i'
+			qui gen `ASC_'`i' = (`alternatives' == `i')
+		}				
+		if "`basealternative'" ==""{ // if basealternative not specified use min 
+			qui sum  `alternatives' , meanonly 
+			local min_alt = r(min)
+			drop `ASC_'`min_alt' // drop ASC with min value from `alternatives'
+		} 
+		else{
+			capture drop `ASC_'`basealternative'
+		}
+		** Generate local with ASC equation for ML **
+		local ASC_vars (ASC: `ASC_'*   , nocons)
+	}
+	else { // if no constant are specified,  ASC_vars is empty
+		if "`basealternative'" !=""{
+			di in red "Option basealternative() not compatible with noconstant."
+			exit 198
+			}
+		else {
+		    local ASC_vars = ""
+		}
+	}
+	
+	** number of distinct choice situations **
+	mata: st_view(panvar = ., ., st_global("group_mata"))
+	mata: paninfo = panelsetup(panvar, 1) 	
+	mata: npanels = panelstats(paninfo)[1]
+	mata: st_numscalar("__n_cases", npanels)
+	
+	** number of clusters **
+	if ("`cluster'" != "") {
+	    mata: st_view(panvar = ., ., st_global("cluster_mata"))
+	    mata: paninfo = panelsetup(panvar, 1) 	
+	    mata: npanels = panelstats(paninfo)[1]
+	    mata: st_numscalar("__n_clusters", npanels)
+	}
 		
 	** Generate individual id **
 	if ("`id'" != "") {
@@ -243,24 +323,26 @@ program Estimate, eclass sortpreserve
 	/*=======================================================================*/		
 
 	** Run optimisation routine **
-	ml model gf0  mixRRM_gf0() `max', maximize `mlopts' 
+	ml model gf0  mixRRM_gf0() `max' `ASC_vars', maximize `mlopts' 
 
     * To be returned as e() **
     ereturn local title "Mixed random regret model"
     ereturn local indepvars `rhs'
     ereturn local depvar `lhs'
     ereturn local group `group'
-    
+	ereturn local basealternative  "`basealternative'"
+	ereturn local ASC "${cons_demanded}"
+	    
 	ereturn scalar kfix = `kfix'
     ereturn scalar krnd = `krnd'
 	ereturn scalar krln = `ln'
 	ereturn scalar nrep = `nrep'
 	ereturn scalar burn = `burn'
-	
+	ereturn scalar n_cases = __n_cases
 		
 	if ("`id'" != "") ereturn local id `id'
 	if ("`robust'" != "") ereturn local vcetype Robust
-	
+	if ("`cluster'" != "") ereturn scalar n_clusters = __n_clusters
 	if ("`userdraws'" != "") ereturn scalar userdraws = 1
 	else ereturn scalar userdraws = 0
 	
@@ -273,22 +355,32 @@ end
 
 
 program Header
-     loc df_m = e(df_m)
-	 di ""
-     di in gr e(title)
-     di ""
-     di in gr `"Case ID variable: `=abbrev("${group_mata}",24)'"' _col(48) /// Case ID
+    di ""
+    di in gr `"Case ID variable: `=abbrev("${group_mata}",24)'"' _col(48) /// Case ID
      "Number of cases" _col(67) "= " in ye %10.0g e(n_cases)
     
 	di in gr `"Alternative variable: `=abbrev("${alternatives_mata}",24)'"' _col(48)
-    //  "Number of obs" _col(67) "= " in ye %10.0g e(N)       
+	di in gr `"Random variable(s): `=abbrev("${rnd_mata}",24)'"' _col(48)
+	
+	di ""
+	if (e(n_clusters)!=.){
+		di in gr _col(34) "(Std. Err. adjusted for" in ye %5.0f e(n_clusters) in gr`" clusters in `=abbrev("${cluster_mata}",24)')"'  
+	}
+	
 end
 
 
 program Replay
-	syntax [, Level(integer `c(level)') CORR]
+	syntax [, Level(integer `c(level)') CORR]   
 	ml display , level(`level')
-
+	
+	di ""
+	if ("`corr'" == "") {
+		di in gr "The sign of the estimated standard deviations is irrelevant: interpret them as"
+		di in gr "being positive"
+	}
+	
+	di ""
+	di in gr "Note: we don't estimate random regret model to get inital values in mixed version." _col(48)
+	di in gr "Users are advised to estimate on their own to make comparsion" _col(48)
 end
-
-

@@ -6,17 +6,16 @@
 /*==================================*/
 clear all
 /*You need to adjust this and change it for the folder where you will be developing the command.*/
-global route = "/Users/zhuziyue/Documents/Master (KU Leuven)/Thesis/wrapping_command_102"
+global route = "/Users/zhuziyue/Documents/GitHub/mixrandregret/src"
 cd "$route"
 /*This will search for the adofile of the command.*/
 findfile mixrandregret.ado
 
 
-
 set seed 777
-local J  3   /*Number of alternatives*/
-local N  20 /*Number of Individuals*/
-local t  5  /*Number of choice sets per individual*/
+local J  5   /*Number of alternatives*/
+local N  600 /*Number of Individuals*/
+local t  10  /*Number of choice sets per individual*/
 
 /*===================================================*/
 /*===  Define the inputs for mata evaluator    ======*/
@@ -28,7 +27,7 @@ local lhs "choice"  // left hand side variables: defined by hand
 local group "id_cs" // variable with choice sets
 local id "id_ind"   // individual ID
 
-local nrep 2       // # of halton draws per random variable
+local nrep 500       // # of halton draws per random variable
 local kfix 0        // # of fixed variable (0 in this script)
 local krnd 2        // # of random variables (both 2 variables, x1 x2)
 local burn 15       // # of burning draws in halton 
@@ -51,16 +50,13 @@ sort id_cs
 /* alternative = size of the choice set from where the individual choose*/
 seq alternative, t(`J')
 
-
-local s = 3
+local s = 10
 /*two generic attributes (random)*/
 gen x1 =  runiform(-`s',`s')
 gen x2 =  runiform(-`s',`s')
 
-
 /*create a fix attribute */
 gen x_fix = rnormal(0,1)
-
 
 /* parameters for distribution */
 local mu_1  = 1
@@ -69,13 +65,10 @@ local mu_2  = 2
 local sigma_1  = 0.5
 local sigma_2  = 0.5
 
-
 mata: b1 = `mu_1' :+ sort(J(`=`J'*`t'', 1, rnormal(`N',1,0,1)),1) :* `sigma_1'
 mata: b2 = `mu_2' :+ sort(J(`=`J'*`t'', 1, rnormal(`N',1,0,1)),1) :* `sigma_2'
 
 mata: b = b1 , b2
-
-
 
 
 global individuals = "id_ind"
@@ -119,8 +112,6 @@ task_n = panelsetup(panvar_choice_sets, 1)
 
 // # of choice sets 
 npanels_choice_sets = panelstats(task_n)[1]
-task_n
-npanels_choice_sets
 
 for(t=1; t<=npanels_choice_sets; t++) {
 
@@ -134,7 +125,7 @@ for(t=1; t<=npanels_choice_sets; t++) {
 	R_i = rowsum(RRM_log_sim_data(x_n, b_n[1,])) /*take first row of block of parameters*/
 
     /* Type 1 error */
-	epsilon  = -1*log(-log(runiform(   rows(R_i),1,0,1)))
+	epsilon  = -1*log(-log(runiform(rows(R_i),1,0,1)))
     /*Random regret */
 	RR_i = R_i  :+ epsilon
 
@@ -157,7 +148,24 @@ for(t=1; t<=npanels_choice_sets; t++) {
 end
 
 
-*** Certification lines ***
+mixrandregret choice x_fix, group(id_cs) id(id_ind) rand(x1 x2) alt(alternative)
+@
+
+/*==================================*/
+/*====  Certification lines   ======*/
+/*==================================*/
+		  
+* cluster check
+mixrandregret choice x_fix, cluster(id_cs) group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) basealternative(1) iter(1)
+
+* Option basealternative() not compatible with noconstant.
+mixrandregret choice x_fix, nrep(1) group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) basealternative(3) iter(1) noconstant
+
+* Variable in alternatives() does not contain basealternative(#) provided 
+mixrandregret choice x_fix, nrep(1) group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) basealternative(4) iter(1)
+
+* In option basealternative(#), # must be numeric.
+mixrandregret choice x_fix, nrep(1) group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) basealternative("a") iter(1)
 
 * The group variable must be numeric
 gen group_string = "a"
@@ -194,8 +202,10 @@ rcof "noisily mixrandregret choice x_fix_f, group(id_cs) id(id_ind) rand(x1 x2) 
 gen choice_f = 2
 rcof "noisily mixrandregret choice_f x_fix, group(id_cs) id(id_ind) rand(x1 x2) alt(alternative)" == 450
 
-@
-
-*Calling the mixrandregret command *
-
+* get different results using ln() option, should work
 mixrandregret choice x_fix, group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) ln(1) iter(1)
+mixrandregret choice x_fix, group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) iter(1)
+
+gen ln_x2 = ln(x2)
+mixrandregret choice x_fix, group(id_cs) id(id_ind) rand(x1 ln_x2) alt(alternative) iter(1)
+
