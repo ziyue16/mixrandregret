@@ -44,7 +44,7 @@ program Estimate, eclass sortpreserve
 		Level(integer `c(level)')	/// set confidence level; default is level(95)
 		USERdraws					///		
 		FRom(string)				/// maximize options
-        TRace						///
+		TRace						///
 		GRADient					///
 		HESSian						///
 		SHOWSTEP					///
@@ -227,7 +227,7 @@ program Estimate, eclass sortpreserve
 			capture drop `ASC_'`basealternative'
 		}
 		** Generate local with ASC equation for ML **
-		local ASC_vars (ASC: `ASC_'*   , nocons)
+		local ASC_vars (ASC: `ASC_'*, noconst)
 	}
 	else { // if no constant are specified,  ASC_vars is empty
 		if "`basealternative'" !=""{
@@ -299,7 +299,7 @@ program Estimate, eclass sortpreserve
 	mata: mixr_krln = strtoreal(st_local("ln"))
 	mata: mixr_burn = strtoreal(st_local("burn"))
 	
-    if ("`userdraws'" != "") mata: mixr_user = 1	
+	if ("`userdraws'" != "") mata: mixr_user = 1	
 	else mata: mixr_user = 0
 
 	
@@ -324,6 +324,27 @@ program Estimate, eclass sortpreserve
 
 	** Run optimisation routine **
 	ml model gf0  mixRRM_gf0() `max' `ASC_vars', maximize `mlopts' 
+	
+					
+	tempname b_all // vector of estimates
+	matrix `b_all' = e(b)
+	
+	** replace tempvar names of ASC for meaningfull names **
+	if "${cons_demanded}" =="YES"{ 
+		local names : colnames `b_all'
+		qui tokenize `names'
+		foreach i of var `ASC_'*{
+			*position ASC_i
+			loc pos_col_i = colnumb(`b_all', "`i'")
+			*id ASC_i
+			loc id_ASC_i =  substr("`i'",-1,.) 	
+			*replacement
+			local `pos_col_i' ASC_`id_ASC_i'
+			local newnames "`*'"
+			*assign corrected names of ASC.
+			matrix colnames `b_all' = `newnames'
+		}
+	}
 
     * To be returned as e() **
     ereturn local title "Mixed random regret model"
@@ -332,7 +353,7 @@ program Estimate, eclass sortpreserve
     ereturn local group `group'
 	ereturn local basealternative  "`basealternative'"
 	ereturn local ASC "${cons_demanded}"
-	    
+	
 	ereturn scalar kfix = `kfix'
     ereturn scalar krnd = `krnd'
 	ereturn scalar krln = `ln'
@@ -364,7 +385,7 @@ program Header
 	
 	di ""
 	if (e(n_clusters)!=.){
-		di in gr _col(34) "(Std. Err. adjusted for" in ye %5.0f e(n_clusters) in gr`" clusters in `=abbrev("${cluster_mata}",24)')"'  
+	di in gr _col(34) "(Std. Err. adjusted for" in ye %5.0f e(n_clusters) in gr`" clusters in `=abbrev("${cluster_mata}",24)')"'  
 	}
 	
 end

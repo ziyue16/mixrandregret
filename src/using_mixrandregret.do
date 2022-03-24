@@ -13,9 +13,9 @@ findfile mixrandregret.ado
 
 
 set seed 777
-local J  5   /*Number of alternatives*/
-local N  600 /*Number of Individuals*/
-local t  10  /*Number of choice sets per individual*/
+local J  3   /*Number of alternatives*/
+local N  100 /*Number of Individuals*/
+local t  5  /*Number of choice sets per individual*/
 
 /*===================================================*/
 /*===  Define the inputs for mata evaluator    ======*/
@@ -27,7 +27,7 @@ local lhs "choice"  // left hand side variables: defined by hand
 local group "id_cs" // variable with choice sets
 local id "id_ind"   // individual ID
 
-local nrep 500       // # of halton draws per random variable
+local nrep 50       // # of halton draws per random variable
 local kfix 0        // # of fixed variable (0 in this script)
 local krnd 2        // # of random variables (both 2 variables, x1 x2)
 local burn 15       // # of burning draws in halton 
@@ -148,7 +148,7 @@ for(t=1; t<=npanels_choice_sets; t++) {
 end
 
 
-mixrandregret choice x_fix, group(id_cs) id(id_ind) rand(x1 x2) alt(alternative)
+mixrandregret choice x_fix, nrep(1) group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) iter(1)
 @
 
 /*==================================*/

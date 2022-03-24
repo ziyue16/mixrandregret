@@ -75,7 +75,7 @@ void mixRRM_gf0(transmorphic scalar MM,
 	real matrix subject     // general info information about individuals 
 	real matrix N_subject   // intermediate step to extract into about num panels 
 
-	/*	Loop scalar variables */
+	/* Loop scalar variables */
 	real scalar n // for individual
 	real scalar t // for choice set
 	real scalar i // alternative i 
@@ -85,16 +85,17 @@ void mixRRM_gf0(transmorphic scalar MM,
 	real scalar n_rows // scalar for num rows
 	real scalar n_cols // scalar for num columns
 	
-	/*	Matrix explanatory and explained variable */
+	/* Matrix explanatory and explained variable */
 	real matrix Y // explained variable
 	real matrix X // covariates
 	
-	/*	Sub matrices pero individual */
+	/* Sub matrices pero individual */
 	real matrix r_i // r_i matrix with regret 
 	real matrix x_n // sub matrix covariates individual n 
 	real matrix y_n // sub matrix   choice   individual n 
 	
-	//cons_demanded = st_global("cons_demanded")
+	cons_demanded = st_global("cons_demanded")
+	
 
 	/*--------------------------*/
 	/*--- variables creation ---*/
@@ -104,10 +105,11 @@ void mixRRM_gf0(transmorphic scalar MM,
 	mixr_X = moptimize_init_eq_indepvars(MM, 1)	// recovering the explanatory variable
 	
 	if (cons_demanded=="YES"){
-		ASC = moptimize_init_eq_indepvars(MM,2) 
-		id_ASC_eq = moptimize_util_eq_indices(MM,2)
+		ASC = moptimize_init_eq_indepvars(MM,3) 
+		id_ASC_eq = moptimize_util_eq_indices(MM,3)
 		b_ASC = b[|id_ASC_eq|]	
 	}  
+	
 
 	/*------------------------------------------------*/
 	/*--- Parse Parameter vector (Random vs Fixed) ---*/
@@ -128,7 +130,7 @@ void mixRRM_gf0(transmorphic scalar MM,
 	MRND = B[|(kfix+1),1\kall,1|] 
 	
 	/* if the user only want independet distributions then only take the diagonal */
-    SRND = diag(B[|(kall+1),1\(kfix+2*krnd),1|])   // no correlation for now
+	SRND = diag(B[|(kall+1),1\(kfix+2*krnd),1|])   // no correlation for now
 	
 	/*------------------------------*/
 	/*--- Compute log-likelihood ---*/
@@ -137,9 +139,13 @@ void mixRRM_gf0(transmorphic scalar MM,
 	/* set up panel information: input is [N x 1] vector "id", and output is [N_subject x 2] matrix "subject" */
 	subject = panelsetup(ID_IND,1)
 	
+	st_view(panvar = ., ., st_global("group_mata"))
+	subject_ASC = panelsetup(panvar,1)
+	
 	/* # of panel units (subjects), identified by number of rows in "panel" */
 	N_subject = panelstats(subject)[1] // given this 1 we recover the Num. of panels
-		
+	npanels = panelstats(subject_ASC)[1]
+	
 	/* tell Stata that log-likelihood is computed at subject level */
 	moptimize_init_by(MM,ID_IND)	
 	
@@ -156,7 +162,7 @@ void mixRRM_gf0(transmorphic scalar MM,
 			ERR = invnormal(mixr_USERDRAWS[|1,(1+nrep*(n-1))\krnd,(nrep*n)|])
 		}
 		else {
-            /* Regular (non-scrambled) Halton integration */
+             /* Regular (non-scrambled) Halton integration */
 			ERR = invnormal(halton(nrep,krnd,(1+burn+nrep*(n-1)))')
 		}
 		
@@ -166,7 +172,7 @@ void mixRRM_gf0(transmorphic scalar MM,
 		 
 		/* lognormal distribution */
 		if (krln > 0){
-            if ((kall-krln) > 0) {
+		    if ((kall-krln) > 0) {
                 BETA = BETA[|1,1\(kall-krln),nrep|] \ exp(BETA[|(kall-krln+1),1\kall,nrep|])
                 }
                 else {
@@ -180,16 +186,16 @@ void mixRRM_gf0(transmorphic scalar MM,
 		/* Looping over choice situations (t) of individual (n) */
 		t = 1 
 		nc = mixr_T[m,1] // number of choice sets
-        // loop over choice sets (t)
-        for(t=1; t<=nc; t++) {
+		// loop over choice sets (t)
+		for(t=1; t<=nc; t++) {
 		
 		    /* Parse the matrix X and Y at the level of choice situation (t) */
 			YMAT = mixr_Y[|m,1\(m+mixr_CSID[m,1]-1),cols(mixr_Y)|]
 			XMAT = mixr_X[|m,1\(m+mixr_CSID[m,1]-1),cols(mixr_X)|]
 			
-			/* shape of block individual n  */	
-		    n_rows=rows(XMAT) // Number of faced alternatives
-		    n_cols=cols(XMAT) // Number of covariates 
+			/* shape of block individual n */	
+			n_rows=rows(XMAT) // Number of faced alternatives
+			n_cols=cols(XMAT) // Number of covariates 
 		
 			/* Start computing the multinomial probability */
 			/* This is the part where he created the probability of equation L_[nit] in mixed random regret */		   
@@ -199,26 +205,27 @@ void mixRRM_gf0(transmorphic scalar MM,
 			for(rr=1; rr<=nrep; rr++) {
 					// Create regret for each alternative 
 					regret_draw_r = RRM_log(XMAT,BETA[.,rr]',1,1) 
-					// Create regret for each alternative and generate the row sum			
-				   // ------  ASC  ------- //		
+					
+					// Create regret for each alternative and generate the row sum with ASC condition
 		           if (cons_demanded=="YES") { 
-			           asc_n 	= panelsubmatrix(ASC, n, paninfo) 
-			           ASC_prod= asc_n*b_ASC'
+			           asc_rr = panelsubmatrix(ASC, rr, subject_ASC) 
+			           ASC_prod = asc_rr*b_ASC'
 			           ER_rep[ .,rr] =rowsum(regret_draw_r) + ASC_prod 
-				       }
+					}
 		           else if (cons_demanded=="NO"){
 			           ER_rep[ .,rr] =rowsum(regret_draw_r) 
 					 }
 					}
+					
 	
 			ER = exp(-ER_rep) // The negative of the regret
 			ER = (ER :/ colsum(ER,1)) 
-
+			
 			/* This generates the product of repeated choices from the same individual */
 			R = R :* colsum(YMAT :* ER, 1) 
 			 
 			/* move the index for the next choice situation */
-			 m = m + mixr_CSID[m,1]
+			m = m + mixr_CSID[m,1]
 			}
 		/* Here we average all the probabilities over all the draws */
 		P[n, 1] = mean(R',1)
