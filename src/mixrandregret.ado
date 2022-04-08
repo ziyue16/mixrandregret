@@ -37,14 +37,13 @@ program Estimate, eclass sortpreserve
 		CLuster(varname)			///
 		Robust						///
 		LN(integer 0) 				/// specifies that the last # variables in rand() have lognormally coefficients
-		CORR						/// random coefficients are correlated
+		CORR						/// random coefficients are correlated (not allowed yet)
 		NREP(integer 50)			/// the number of Halton draws used for the simulation
 		BURN(integer 15)			/// the number of initial sequence elements to drop
 		COLL						/// overrides checks for multicollinearity		
 		Level(integer `c(level)')	/// set confidence level; default is level(95)
 		USERdraws					///		
-		FRom(string)				/// maximize options
-		TRace						///
+		TRace						/// maximize options
 		GRADient					///
 		HESSian						///
 		SHOWSTEP					///
@@ -55,19 +54,19 @@ program Estimate, eclass sortpreserve
 		NRTOLerance(passthru)		///
 		CONSTraints(passthru)		///
 		TECHnique(passthru)			///
-		DIFficult					///
-	]
+		DIFficult					///   
+		FRom(string)                ///
+	]                                        
 	
-		local mlopts `trace' `gradient' `hessian' `showstep' `iterate' `tolerance' ///
-	    `ltolerance' `gtolerance' `nrtolerance' `technique' `difficult'
+	local mlopts `trace' `gradient' `hessian' `showstep' `iterate' `tolerance' ///
+	`ltolerance' `gtolerance' `nrtolerance' `constraints' `technique' `difficult' `from' 
 		
-	** globals to mata **
-	global group_mata =  "`group'"
-	global alternatives_mata =  "`alternatives'"
-	global cluster_mata =  "`cluster'"
+	** Globals to mata **
+	global group_mata = "`group'"
+	global alternatives_mata = "`alternatives'"
+	global cluster_mata = "`cluster'"
 	global rnd_mata = "`rand'"
 
-	
 	capture mata: mata drop RRM_log() mixRRM_gf0()
 	/* include mata functions from randregret.mata */
 	findfile "mixRRM_gf0.mata"
@@ -78,7 +77,7 @@ program Estimate, eclass sortpreserve
 	/*=======================================================================*/	
     
 	** Don't need technique checks **
-	** Check that group, id, cluster and alternative variables are numeric **
+	** Check that group, alternatives, id, and cluster variables are numeric **
 	capture confirm numeric var `group'
 		if _rc != 0 {
 			di in r "The group variable must be numeric"
@@ -210,8 +209,7 @@ program Estimate, eclass sortpreserve
 				exit 198
 				}
 			}
-			
-		** Generate ASC as tempvars **
+		/* generate ASC as tempvars */
 		qui levelsof `alternatives', local(levels_altern)
 		tempvar ASC_
 		foreach i of local levels_altern {
@@ -226,7 +224,7 @@ program Estimate, eclass sortpreserve
 		else{
 			capture drop `ASC_'`basealternative'
 		}
-		** Generate local with ASC equation for ML **
+		/* generate local with ASC equation for ML */
 		local ASC_vars (ASC: `ASC_'*, noconst)
 	}
 	else { // if no constant are specified,  ASC_vars is empty
@@ -239,13 +237,13 @@ program Estimate, eclass sortpreserve
 		}
 	}
 	
-	** number of distinct choice situations **
+	** Number of distinct choice situations **
 	mata: st_view(panvar = ., ., st_global("group_mata"))
 	mata: paninfo = panelsetup(panvar, 1) 	
 	mata: npanels = panelstats(paninfo)[1]
 	mata: st_numscalar("__n_cases", npanels)
 	
-	** number of clusters **
+	** Number of clusters **
 	if ("`cluster'" != "") {
 	    mata: st_view(panvar = ., ., st_global("cluster_mata"))
 	    mata: paninfo = panelsetup(panvar, 1) 	
@@ -292,7 +290,6 @@ program Estimate, eclass sortpreserve
 	mata: mixr_CSID = st_data(., st_local("csid"))
 	mata: mixr_IND = st_data(., st_local("id"))
 
-
 	mata: mixr_nrep = strtoreal(st_local("nrep"))
 	mata: mixr_kfix = strtoreal(st_local("kfix"))
 	mata: mixr_krnd = strtoreal(st_local("krnd"))
@@ -315,7 +312,7 @@ program Estimate, eclass sortpreserve
 		local max `mean' `sd' 
 	}
 
-	** not setting up starting values **
+	** Not setting up starting values **
 	
 	
 	/*=======================================================================*/	
@@ -325,25 +322,24 @@ program Estimate, eclass sortpreserve
 	** Run optimisation routine **
 	ml model gf0  mixRRM_gf0() `max' `ASC_vars', maximize `mlopts' 
 	
-					
+	** Replace tempvar names of ASC for meaningfull names **
 	tempname b_all // vector of estimates
 	matrix `b_all' = e(b)
 	
-	** replace tempvar names of ASC for meaningfull names **
 	if "${cons_demanded}" =="YES"{ 
 		local names : colnames `b_all'
 		qui tokenize `names'
 		foreach i of var `ASC_'*{
-			*position ASC_i
+			/* position ASC_i */
 			loc pos_col_i = colnumb(`b_all', "`i'")
-			*id ASC_i
+			/* id ASC_i */
 			loc id_ASC_i =  substr("`i'",-1,.) 	
-			*replacement
+			/* replacement */
 			local `pos_col_i' ASC_`id_ASC_i'
-			local newnames "`*'"
-			*assign corrected names of ASC.
+			local newnames "`*'"			
+			/* assign corrected names of ASC */
 			matrix colnames `b_all' = `newnames'
-		}
+		}                            
 	}
 
     * To be returned as e() **
@@ -368,6 +364,7 @@ program Estimate, eclass sortpreserve
 	else ereturn scalar userdraws = 0
 	
 	ereturn local cmd "mixrandregret"
+	ereturn repost b=`b_all',  rename
 	
 	Header
 	Replay, level(`level')

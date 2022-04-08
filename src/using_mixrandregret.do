@@ -13,7 +13,7 @@ findfile mixrandregret.ado
 
 
 set seed 777
-local J  5   /*Number of alternatives*/
+local J  4   /*Number of alternatives*/
 local N  10 /*Number of Individuals*/
 local t  3 /*Number of choice sets per individual*/
 
@@ -152,8 +152,8 @@ for(t=1; t<=npanels_choice_sets; t++) {
 end
 
 //matrix define m = J(7, 1, 1)
-mixrandregret choice x_fix, nrep(1) group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) iter(1)
-mixrpred p_hat, group(id_cs) id(id_ind) alt(alternative) xb nrep(5)
+mixrandregret choice x_fix, nrep(5) group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) iter(1)
+mixrpred p, group(id_cs) id(id_ind) alt(alternative) nrep(10) xb
 @
 
 /*==================================*/

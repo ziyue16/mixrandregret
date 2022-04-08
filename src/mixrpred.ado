@@ -1,4 +1,4 @@
-*! mixrpred 1.1.0 4Mar2022
+*! mixrpred 1.1.0 8Apr2022
 *! [aut & dev] Ziyue Zhu  &  Álvaro A. Gutiérrez-Vargas
 
 program define mixrpred, eclass
@@ -23,7 +23,7 @@ program define mixrpred, eclass
 		
 		** Mark the prediction sample **
 		marksample touse , novarlist
-		markout `touse' `group' `id' `e(basealternative)' `alternatives'
+		markout `touse' `e(indepvars)' `group' `id' `e(basealternative)' `alternatives'
 		
 		** Generate variables used to sort data **
 	    tempvar sorder altid
@@ -50,14 +50,13 @@ program define mixrpred, eclass
 		   qui duplicates report `group'
 		   mata: mixrpre_np = st_numscalar("r(unique_value)")
 		   mata: mixrpre_T = J(st_nobs(),1,1)
-	}
+	     }
         
 		** Generate choice occacion id **
 	    tempvar csid
 	    sort `group'
 	    by `group': egen `csid' = sum(1)
 	    qui duplicates report `group'
-	    local nobs = r(unique_value)
 
 	    ** Sort data **
 	    sort `id' `group' `altid'
@@ -66,7 +65,6 @@ program define mixrpred, eclass
 	    local rhs `e(indepvars)'
 	    mata: mixrpre_X = st_data(., tokens(st_local("rhs")))
 	    mata: mixrpre_CSID = st_data(., ("`csid'"))
-	    local totobs = _N	 
 	
      	** Restore data **
 	    restore
@@ -75,7 +73,7 @@ program define mixrpred, eclass
 		mata: st_view(panvar = ., ., "`group'") 
 		
 		** X's **
-		loc cmdline =  "`e(cmdline)'" 
+		loc cmd =  "`e(cmd)'" 
 		gettoken mixrandregret rhs: cmdline, parse(" ,")  // cmdline
 		gettoken y x_options:  rhs, parse(" ,") 	      // dependent name
 		gettoken covars options: x_options, parse(",")    // covars names
@@ -128,15 +126,9 @@ program define mixrpred, eclass
 		mata: b_hat= st_matrix("`b_hat'")		
 		mata: b_all= st_matrix("`b_all'")
 		mata: ASC_hat= st_matrix("`ASC_hat'")
+				
+		** Predicted Probability Computations **
+		mata: prediction = pbb_pred(X, ASC, panvar) 
 		
-		// Predicted Probability Computations
-		mata: prediction= pbb_pred(X, ASC, panvar) 
-
-		qui gen double	`varlist' = .	
-		mata: empty_view = .
-		mata: st_view(empty_view, ., "`varlist'")
-		mata: empty_view[.,.] =prediction[.,.]
-		qui replace `varlist' =. if e(sample)  != 1  
-		qui replace `varlist' =. if   `touse' !=1 
-}			
+		mata: st_store(., st_addvar("float", "`varlist'"), prediction)  
 end

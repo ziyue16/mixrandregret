@@ -215,6 +215,7 @@ void mixRRM_gf0(transmorphic scalar MM,
 			
 			m = m + mixr_CSID[m,1] // move the index for the next choice situation
 			}
+
 		P[n, 1] = mean(R',1) // average all the probabilities over all the draws
 		}
  		
@@ -255,11 +256,9 @@ real matrix pbb_pred(real matrix X, real matrix ASC, real colvector panvar)
 	krnd = st_numscalar("e(krnd)")
 	krln = st_numscalar("e(krln)")
 	burn = strtoreal(st_local("burn"))
-	//corr = st_numscalar("e(corr)")
 	user = st_numscalar("e(userdraws)")
 	
 	cons_demanded = st_global("cons_demanded")
-	//ASC_option = st_global("e(ASC)") 
 	proba = st_local("proba") 
 
 	/*------------------------------*/
@@ -342,33 +341,46 @@ real matrix pbb_pred(real matrix X, real matrix ASC, real colvector panvar)
 			}
 			
 			ER_hat = exp(-ER_rep_hat) 
-			p_hat_i = (ER_hat :/ colsum(ER_hat,1)) 
-
-		    /* Probability prediction: proba option [default] */	
-	    	if (proba != "") {
-			    if (n==1) p_hat = p_hat_i	
-			    else 	  p_hat = p_hat  \ p_hat_i	
+			p_hat_i = (ER_hat :/ colsum(ER_hat,1))
+			
+			N_cs = mixrpre_CSID[1]
+			/* Object output */
+	        p_out_cs = J(N_cs,1,0)
+			regret_out_cs = J(N_cs,1,0)	
+			
+			for(aa = 1; aa <= N_cs; aa++) {
+				p_out_cs[aa,1] = mean(p_hat_i[aa,.]', 1)
+				regret_out_cs[aa,1] = mean(ER_rep_hat[aa,.]', 1)
+			}
+			
+			m = m + mixrpre_CSID[m,1]
+			
+			/* Probability prediction: proba option [default] */	
+	        if (proba != "") {
+			    if (t==1) p_hat_cs = p_out_cs	
+			    else 	  p_hat_cs = p_hat_cs \ p_out_cs	
 			}
 		    else{ 
-		    /* Linear prediction: xb option */ 
-			    if (n==1) regret_hat = ER_rep_hat	
-			    else 	  regret_hat = regret_hat  \ ER_rep_hat	
-			}	
-		     m = m + mixrpre_CSID[m,1]
-			 regret_hat
-			 p_hat
-			 exit(77)
-		}	
+            /* Linear prediction: xb option */ 
+			    if (t==1) regret_hat_cs = regret_out_cs	
+			    else 	  regret_hat_cs = regret_hat_cs \ regret_out_cs	
+			}
+		}
 		
-		regret_out[n, 1] = mean(regret_hat',1) // average over all the draws
-		p_out[n, 1] = mean(p_hat',1)
-		regret_out
-	   exit(77)
+		/* Append individuals */
+	    if (proba != "") {
+			if (n==1) p_hat = p_hat_cs	
+			else 	  p_hat = p_hat \ p_hat_cs	
+			}
+		else{ 
+			if (n==1) regret_hat = regret_hat_cs	
+			else 	  regret_hat = regret_hat \ regret_hat_cs	
+			}
 	}
 	
 	/* Output prediction */
-	if (proba != "") return(p_out)
-	else return(regret_out)	
+	if (proba != "") return(p_hat)
+	else return(regret_hat)
 }
 end
 
