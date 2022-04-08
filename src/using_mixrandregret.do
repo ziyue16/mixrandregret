@@ -1,4 +1,4 @@
-*! 1.1.1 17 Jan 2022
+*! 1.1.0 17 Jan 2022
 * Author: Ziyue ZHU (ziyue.zhu@student.kuleuven.be) 
 
 /*==================================*/
@@ -6,16 +6,16 @@
 /*==================================*/
 clear all
 /*You need to adjust this and change it for the folder where you will be developing the command.*/
-global route = "/Users/zhuziyue/Documents/GitHub/mixrandregret/src"
+global route = "D:\mixrandregret\src"
 cd "$route"
 /*This will search for the adofile of the command.*/
 findfile mixrandregret.ado
 
 
 set seed 777
-local J  3   /*Number of alternatives*/
-local N  100 /*Number of Individuals*/
-local t  5  /*Number of choice sets per individual*/
+local J  5   /*Number of alternatives*/
+local N  10 /*Number of Individuals*/
+local t  3 /*Number of choice sets per individual*/
 
 /*===================================================*/
 /*===  Define the inputs for mata evaluator    ======*/
@@ -28,7 +28,7 @@ local group "id_cs" // variable with choice sets
 local id "id_ind"   // individual ID
 
 local nrep 50       // # of halton draws per random variable
-local kfix 0        // # of fixed variable (0 in this script)
+local kfix 1         // # of fixed variable (0 in this script)
 local krnd 2        // # of random variables (both 2 variables, x1 x2)
 local burn 15       // # of burning draws in halton 
 
@@ -50,7 +50,7 @@ sort id_cs
 /* alternative = size of the choice set from where the individual choose*/
 seq alternative, t(`J')
 
-local s = 10
+local s = 5
 /*two generic attributes (random)*/
 gen x1 =  runiform(-`s',`s')
 gen x2 =  runiform(-`s',`s')
@@ -67,6 +67,10 @@ local sigma_2  = 0.5
 
 mata: b1 = `mu_1' :+ sort(J(`=`J'*`t'', 1, rnormal(`N',1,0,1)),1) :* `sigma_1'
 mata: b2 = `mu_2' :+ sort(J(`=`J'*`t'', 1, rnormal(`N',1,0,1)),1) :* `sigma_2'
+
+//mata: exp_b1 = exp(b1)
+//mata: exp_b1 = exp(b2)
+
 
 mata: b = b1 , b2
 
@@ -147,8 +151,9 @@ for(t=1; t<=npanels_choice_sets; t++) {
 
 end
 
-
+//matrix define m = J(7, 1, 1)
 mixrandregret choice x_fix, nrep(1) group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) iter(1)
+mixrpred p_hat, group(id_cs) id(id_ind) alt(alternative) xb nrep(5)
 @
 
 /*==================================*/
@@ -158,7 +163,7 @@ mixrandregret choice x_fix, nrep(1) group(id_cs) id(id_ind) rand(x1 x2) alt(alte
 * cluster check
 mixrandregret choice x_fix, cluster(id_cs) group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) basealternative(1) iter(1)
 
-* Option basealternative() not compatible with noconstant.
+* Option basealternative() not compatible with noconstant
 mixrandregret choice x_fix, nrep(1) group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) basealternative(3) iter(1) noconstant
 
 * Variable in alternatives() does not contain basealternative(#) provided 
