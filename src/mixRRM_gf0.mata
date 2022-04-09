@@ -30,6 +30,31 @@ real matrix RRM_log(real matrix 	x_n,
 }
 end
 
+** updated RRM function **
+mata:
+real matrix RRM_log_v2(real matrix 	x_n, 
+					real rowvector 	b)	
+{
+	real scalar i, j
+	
+	for(i = 1; i <= rows(x_n); ++i) { 
+		for(j = 1; j <= rows(x_n); ++j) { 
+		    if (i!=j){
+			d_ijm = x_n[j, . ] :- x_n[i, . ]
+
+			if ((j == 2 & i == 1) | (j == 1)) d_im = d_ijm
+			else d_im = d_im \ d_ijm
+			}
+		}
+		regret_i = ln(1 :+ exp(b :* d_im))
+
+		if (i == 1) regret_n = colsum(regret_i) 	
+		else regret_n = regret_n \ colsum(regret_i)
+		}
+	
+	return(regret_n)
+}
+end
 
 
 /*=======================================================================*/	
@@ -197,7 +222,7 @@ void mixRRM_gf0(transmorphic scalar MM,
 			}
 			
 			for(rr=1; rr<=nrep; rr++) {
-					regret_draw_r = RRM_log(XMAT,BETA[.,rr]',1,1) // create regret for each alternative 
+					regret_draw_r = RRM_log_v2(XMAT,BETA[.,rr]') // create regret for each alternative 
                    
 		           if (cons_demanded=="YES") { 
 			           ER_rep[ .,rr] =rowsum(regret_draw_r :+ ASC_prod) //generate the row sum with ASC condition
@@ -330,7 +355,7 @@ real matrix pbb_pred(real matrix X, real matrix ASC, real colvector panvar)
 			 
 			ER_rep_hat = J(n_rows, nrep, 0) 
 			for(rr = 1; rr <= nrep; rr++) {
-				   regret_draw_hat = RRM_log(XMAT,BETA_hat[.,rr]',1,1) 
+				   regret_draw_hat = RRM_log_v2(XMAT,BETA_hat[.,rr]') 
 
 		           if (cons_demanded=="YES") {        
 			            ER_rep_hat[., rr] =rowsum(regret_draw_hat :+ ASC_prod)	   
