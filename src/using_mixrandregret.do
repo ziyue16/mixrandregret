@@ -153,7 +153,9 @@ end
 
 //matrix define m = J(7, 1, 1)
 mixrandregret choice x_fix, nrep(5) group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) iter(1)
-mixrpred p, group(id_cs) id(id_ind) alt(alternative) nrep(10) xb
+mixrpred p, nrep(10) xb
+mixrbeta x1 x2 x_fix, nrep(10) saving(a) replace
+
 @
 
 /*==================================*/

@@ -2,12 +2,9 @@
 *! [aut & dev] Ziyue Zhu  &  Álvaro A. Gutiérrez-Vargas
 
 program define mixrpred, eclass
-        version 12
+        version 9.2
 	
         syntax newvarname [if] [in],  	///
-		GRoup(varname) 			 		///
-		ALTernatives(varname)			///
-		ID(varname) 				    ///
 		[PROBA							///
 		NREP(integer 50)                ///
 		BURN(integer 15)                ///
@@ -22,44 +19,44 @@ program define mixrpred, eclass
 		}  
 		
 		** Mark the prediction sample **
-		marksample touse , novarlist
-		markout `touse' `e(indepvars)' `group' `id' `e(basealternative)' `alternatives'
+		marksample touse, novarlist
+		markout `touse' `e(indepvars)' `e(group)' `e(id)' `e(basealternative)' `e(alternatives)'
 		
 		** Generate variables used to sort data **
 	    tempvar sorder altid
 	    gen `sorder' = _n
-	    sort `touse' `id' `group'
-	    by `touse' `id' `group': gen `altid' = _n 
+	    sort `touse' `e(id)' `e(group)'
+	    by `touse' `e(id)' `e(group)': gen `altid' = _n 
 		
 		** Drop data not in prediction sample **
 	    preserve
 	    qui keep if `touse'
 		
 		** Generate individual id **
-	    if ("`id'" != "") {
+	    if ("`e(id)'" != "") {
 		   tempvar nchoice pid
-		   sort `group'
-		   by `group': gen `nchoice' = cond(_n==_N,1,0)
-		   sort `id'
-		   by `id': egen `pid' = sum(`nchoice')		
-		   qui duplicates report `id'
+		   sort `e(group)'
+		   by `e(group)': gen `nchoice' = cond(_n==_N,1,0)
+		   sort `e(id)'
+		   by `e(id)': egen `pid' = sum(`nchoice')		
+		   qui duplicates report `e(id)'
 		   mata: mixrpre_np = st_numscalar("r(unique_value)")
 		   mata: mixrpre_T = st_data(., st_local("pid"))
 	     }
 	     else {
-		   qui duplicates report `group'
+		   qui duplicates report `e(group)'
 		   mata: mixrpre_np = st_numscalar("r(unique_value)")
 		   mata: mixrpre_T = J(st_nobs(),1,1)
 	     }
         
 		** Generate choice occacion id **
 	    tempvar csid
-	    sort `group'
-	    by `group': egen `csid' = sum(1)
-	    qui duplicates report `group'
+	    sort `e(group)'
+	    by `e(group)': egen `csid' = sum(1)
+	    qui duplicates report `e(group)'
 
 	    ** Sort data **
-	    sort `id' `group' `altid'
+	    sort `e(id)' `e(group)' `altid'
 
 		** Set Mata matrices to be used in prediction routine **
 	    local rhs `e(indepvars)'
@@ -70,7 +67,7 @@ program define mixrpred, eclass
 	    restore
 		
 		** panvar **
-		mata: st_view(panvar = ., ., "`group'") 
+		mata: st_view(panvar = ., ., "`e(group)'") 
 		
 		** X's **
 		loc cmd =  "`e(cmd)'" 
@@ -88,7 +85,7 @@ program define mixrpred, eclass
 				matrix `b_hat' = `b_all' 	
 		} 
 		else if "${cons_demanded}" =="YES"{
-				qui tab `alternatives' 
+				qui tab `e(alternatives)' 
 				local n_altern = r(r) 
 					matrix `b_hat' 	 = `b_all'[1,1..(`e(rank)'-`n_altern')+1] 		 
 					matrix `ASC_hat' = `b_all'[1,`e(rank)'-(`n_altern'-2)..`e(rank)']
@@ -97,19 +94,19 @@ program define mixrpred, eclass
 		** Generate ASC if needed **
 		if "`e(ASC)'"=="YES" {
 			// generate ASC as tempvars
-			qui levelsof `alternatives', local(levels_altern)
+			qui levelsof `e(alternatives)', local(levels_altern)
 			tempvar ASC_
 			foreach i of local levels_altern {
 				tempvar ASC_`i'
-				qui gen `ASC_'`i' = (`alternatives' == `i')
+				qui gen `ASC_'`i' = (`e(alternatives)' == `i')
 			}				
-			qui tab `alternatives' 
+			qui tab `e(alternatives)' 
 			local n_altern = r(r) 
 			if "`e(basealternative)'"!=""{
 				drop `ASC_'`e(basealternative)'
 			}
 			else{ // drop the alternative with lower number
-				qui sum  `alternatives' , meanonly 
+				qui sum  `e(alternatives)' , meanonly 
 				local min_alt = r(min)
 				qui drop `ASC_'`min_alt'
 			}
