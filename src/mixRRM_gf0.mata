@@ -409,3 +409,152 @@ real matrix pbb_pred(real matrix X, real matrix ASC, real colvector panvar)
 }
 end
 
+
+
+/*=======================================================================*/	
+/*==================  INDIVIDUAL LEVEL PARAMETERS  ======================*/	
+/*=======================================================================*/
+
+version 9.2
+mata: 
+function mixr_beta(string scalar B_s)
+{
+
+	/*---------------------------*/
+	/*--- External Variables  ---*/
+	/*---------------------------*/
+	
+	external mixrbeta_X
+	external mixrbeta_Y
+	external mixrbeta_T
+	external mixrbeta_CSID
+	external mixrbeta_PB
+	external mixrbeta_np
+	external mixrbeta_ID
+	external b_beta
+	external b_all
+	external ASC_beta
+	external ASC
+
+	np = mixrbeta_np
+	ID_IND = mixrbeta_ID  // variable that stores Individuals 
+	command = st_local("cmd")
+	nrep = strtoreal(st_local("nrep"))
+	kfix = st_numscalar("e(kfix)")
+	krnd = st_numscalar("e(krnd)")
+	krln = st_numscalar("e(krln)")
+	burn = strtoreal(st_local("burn"))
+	user = st_numscalar("e(userdraws)")
+	
+	//cons_demanded = st_global("cons_demanded")
+
+	/*------------------------------*/
+	/*--- Parse Parameter vector ---*/
+	/*------------------------------*/
+	
+	B_beta = b_all'
+
+	kall = kfix + krnd
+	
+	if (kfix > 0) {
+		MFIX_beta = B_beta[|1,1\kfix,1|]
+		MFIX_beta = MFIX_beta :* J(kfix,nrep,1)	
+	}
+	
+	MRND_beta = B_beta[|(kfix+1),1\kall,1|] 
+	SRND_beta = diag(B_beta[|(kall+1),1\(kfix+2*krnd),1|]) 
+	
+	/*--------------------------*/
+	/*--- Compute Prediction ---*/
+	/*--------------------------*/
+	
+	/* Set up panel information */
+	subject = panelsetup(ID_IND,1)	
+	N_subject = panelstats(subject)[1] 
+				   
+	/* Panel information for ASC */		
+	st_view(panvar = ., ., st_global("group_mata")) // panel information for ASC
+	subject_ASC = panelsetup(panvar, 1)
+	npanels = panelstats(subject_ASC)[1]
+			
+	if (user == 1) external mixr_USERDRAWS
+	
+	/* Object P */
+	P = J(np,1,0)
+	
+	m = 1
+	/* Loop over individuals (npanels) */
+	for(n=1; n <= N_subject; n++) {
+		
+		if (user == 1) {
+			ERR = invnormal(mixr_USERDRAWS[|1,(1+nrep*(n-1))\krnd,(nrep*n)|])
+		}
+		else {
+             /* Regular (non-scrambled) Halton integration */
+			ERR = invnormal(halton(nrep,krnd,(1+burn+nrep*(n-1)))')
+		}
+		
+		
+		/* Modify parameters to construct the [beta = mu + sigma * draw] structure. */
+		if (kfix > 0) BETA_new = MFIX_beta \ (MRND_beta :+ (SRND_beta*ERR)) 
+		else BETA_new = MRND_beta :+ (SRND_beta*ERR) // get all random variables
+		 
+		/* Log-normal distribution */
+		if (krln > 0){
+		    if ((kall-krln) > 0) {
+                BETA_new = BETA_new[|1,1\(kall-krln),nrep|] \ exp(BETA_new[|(kall-krln+1),1\kall,nrep|])
+                }
+                else {
+                BETA_new = exp(BETA_new)
+                }
+		}
+
+		/* Object R */
+		R = J(1,nrep,1)	
+		
+		/* Looping over choice situations (t) of individual (n) */
+		t = 1 
+		nc = mixrbeta_T[m,1] // number of choice sets
+		for(t=1; t<=nc; t++) {
+		
+		    /* Parse the matrix X and Y at the level of choice situation (t) */
+			YMAT = mixrbeta_Y[|m, 1\(m+mixrbeta_CSID[m,1]-1), cols(mixrbeta_Y)|]
+			XMAT = mixrbeta_X[|m, 1\(m+mixrbeta_CSID[m,1]-1), cols(mixrbeta_X)|]
+			
+			/* Shape of block individual n */	
+			n_rows=rows(XMAT) // number of faced alternatives
+			n_cols=cols(XMAT) // number of covariates 
+								
+			if ("${cons_demanded}"=="YES") {
+			   asc = panelsubmatrix(ASC, 1, subject_ASC)
+			   ASC_prod = asc*ASC_beta'
+			}
+			 
+			ER_rep_beta = J(n_rows, nrep, 0) 
+			for(rr = 1; rr <= nrep; rr++) {
+				   regret_draw_beta = RRM_log_v2(XMAT,BETA_new[.,rr]') 
+
+		           if ("${cons_demanded}"=="YES") {        
+			            ER_rep_beta[., rr] =rowsum(regret_draw_beta :+ ASC_prod)	   
+					}
+		           else if ("${cons_demanded}"=="NO"){
+			           ER_rep_beta[ .,rr] =rowsum(regret_draw_beta) 
+					 }
+			}
+			
+			ER_beta = exp(-ER_rep_beta) 
+			ER_beta = (ER_beta :/ colsum(ER_beta,1)) 
+			
+			R = R :* colsum(YMAT :* ER_beta, 1) 
+			m = m + mixrbeta_CSID[m,1] 
+			}
+
+		P[n, 1] = mean(R',1) 
+	    mixrbeta_PB[n,.] = mean((R :* BETA_new)',1) / P[n,1]
+
+		}	
+}
+end	
+
+exit
+

@@ -347,7 +347,9 @@ program Estimate, eclass sortpreserve
     ereturn local indepvars `rhs'
     ereturn local depvar `lhs'
     ereturn local group `group'
-	ereturn local basealternative  "`basealternative'"
+	ereturn local id `id'
+	ereturn local alternatives  `alternatives'
+	ereturn local basealternative  `basealternative'
 	ereturn local ASC "${cons_demanded}"
 	
 	ereturn scalar kfix = `kfix'
