@@ -11,7 +11,7 @@ clear all
 global route = "C:\Users\u0133260\Documents\_local_git_repos\mixrandregret\src"
 cd "$route"
 
-log using "C:\Users\u0133260\Documents\_local_git_repos\mixrandregret\certification\apollo_benckmark\mixrandregret_results.smcl"
+log using "C:\Users\u0133260\Documents\_local_git_repos\mixrandregret\certification\apollo_benckmark\mixrandregret_results.smcl" ,replace
 
 
 /*This will search for the adofile of the command.*/
