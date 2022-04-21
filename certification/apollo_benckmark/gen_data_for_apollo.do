@@ -11,7 +11,7 @@ clear all
 global route = "C:\Users\u0133260\Documents\_local_git_repos\mixrandregret\src"
 cd "$route"
 
-log using "C:\Users\u0133260\Documents\_local_git_repos\mixrandregret\certification\apollo_benckmark\mixrandregret_results.smcl" ,replace
+log using "C:\Users\u0133260\Documents\_local_git_repos\mixrandregret\certification\apollo_benckmark\mixrandregret_results_bfgs.smcl" ,replace
 
 
 /*This will search for the adofile of the command.*/
@@ -160,7 +160,7 @@ end
 
 timer clear
 timer on 1
-mixrandregret choice x_fix, cluster(id_cs) group(id_cs) id(id_ind) nrep(1000) rand(x1 x2) alt(alternative) nocons 
+mixrandregret choice x_fix, cluster(id_cs) group(id_cs) id(id_ind) nrep(1000) rand(x1 x2) alt(alternative) nocons tech(bfgs)
 timer off 1
 timer list
 

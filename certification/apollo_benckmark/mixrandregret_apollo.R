@@ -173,56 +173,10 @@ model = apollo_estimate(apollo_beta, apollo_fixed,apollo_probabilities, apollo_i
 # ----------------------------------------------------------------- #
 apollo_modelOutput(model)
 # 
-# 
-# Model run by u0133260 using Apollo 0.2.7 on R 4.1.2 for Windows.
-# www.ApolloChoiceModelling.com
-# 
-# Model name                       : MMNL_preference_space
-# Model description                : Mixed random regret logit model on simulated data
-# Model run at                     : 2022-04-19 17:58:14
-# Estimation method                : bfgs
-# Model diagnosis                  : successful convergence 
-# Number of individuals            : 500
-# Number of rows in database       : 3000
-# Number of modelled outcomes      : 3000
-# 
-# Number of cores used             :  10 
-# Number of inter-individual draws : 1000 (halton)
-# 
-# LL(start)                        : -744.14
-# LL(0)                            : -3295.84
-# LL(C)                            : -3293.8
-# LL(final)                        : -714.27
-# Rho-square (0)                   :  0.7833 
-# Adj.Rho-square (0)               :  0.7818 
-# Rho-square (C)                   :  0.7831 
-# Adj.Rho-square (C)               :  0.7816 
-# AIC                              :  1438.54 
-# BIC                              :  1468.57 
-# 
-# Estimated parameters             :  5
-# Time taken (hh:mm:ss)            :  00:03:15.84 
-# pre-estimation              :  00:01:8.21 
-# estimation                  :  00:00:49.28 
-# post-estimation             :  00:01:18.35 
-# Iterations                       :  15  
-# Min abs eigenvalue of Hessian    :  76.59837 
-# 
-# Unconstrained optimisation.
-# 
-# Estimates:
-#   Estimate        s.e.   t.rat.(0)    Rob.s.e. Rob.t.rat.(0)
-# mu_x1    0.885367     0.05194     17.0473     0.05477       16.1655
-# sd_x1    0.359805     0.03572     10.0725     0.04293        8.3811
-# mu_x2    1.808286     0.09631     18.7764     0.09757       18.5327
-# sd_x2   -0.097858     0.08669     -1.1288     0.11758       -0.8323
-# b_fix    0.008325     0.04017      0.2072     0.04067        0.2047
-
 
 conditionals = apollo_conditionals(model,
                                    apollo_probabilities,
                                    apollo_inputs)
-
 
 (posterior_x1 <- hist(conditionals$b_x1$post.mean))
 
