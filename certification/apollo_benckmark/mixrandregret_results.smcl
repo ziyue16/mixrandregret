@@ -1,0 +1,904 @@
+{smcl}
+{com}{sf}{ul off}{txt}{.-}
+      name:  {res}<unnamed>
+       {txt}log:  {res}C:\Users\u0133260\Documents\_local_git_repos\mixrandregret\certification\apollo_benckmark\mixrandregret_results.smcl
+  {txt}log type:  {res}smcl
+ {txt}opened on:  {res}20 Apr 2022, 09:22:02
+{txt}
+{com}. 
+. 
+. /*This will search for the adofile of the command.*/
+. findfile mixrandregret.ado
+{txt}./mixrandregret.ado
+
+{com}. 
+. 
+. 
+. 
+. set seed 777
+{txt}
+{com}. local J  3   /*Number of alternatives*/
+{txt}
+{com}. local N  500 /*Number of Individuals*/
+{txt}
+{com}. local t  6 /*Number of choice sets per individual*/
+{txt}
+{com}. 
+. /*===================================================*/
+. /*===  Define the inputs for mata evaluator    ======*/
+. /*===================================================*/
+. 
+. /*Star defining the inputs for the mata evaluator defined latter.*/
+. local rhs "x1 x2"   // right hand side variables: defined by hand
+{txt}
+{com}. local lhs "choice"  // left hand side variables: defined by hand
+{txt}
+{com}. local group "id_cs" // variable with choice sets
+{txt}
+{com}. local id "id_ind"   // individual ID
+{txt}
+{com}. 
+. local nrep 50       // # of halton draws per random variable
+{txt}
+{com}. local kfix 1         // # of fixed variable (0 in this script)
+{txt}
+{com}. local krnd 2        // # of random variables (both 2 variables, x1 x2)
+{txt}
+{com}. local burn 15       // # of burning draws in halton 
+{txt}
+{com}. 
+. /*Set total number of observations on the data*/
+. set obs  `=`N'*`t'*`J''
+{txt}{p}
+number of observations (_N)  was 0,
+now 9,000
+{p_end}
+
+{com}. * 20 individuals choose from 25 choice sets, and each choice set includes 3 alternatives
+. *ssc install seq 
+. 
+. /* id_ind = id for each individual */
+. seq id_ind, b(`=`J'*`t'')
+{txt}
+{com}. 
+. /* id_cs_of_ind_n = id for each choice situation for each individual n */
+. seq id_cs_of_ind_n,  f(1) t(`=`J'') b(`=`J'')
+{txt}
+{com}. 
+. /* id_cs = id choice situations without considering the individual */
+. seq id_cs,  f(1) t(`=`J'*`N'*`t'') b(`=`J'')
+{txt}
+{com}. sort id_cs
+{txt}
+{com}. 
+. /* alternative = size of the choice set from where the individual choose*/
+. seq alternative, t(`J')
+{txt}
+{com}. 
+. local s = 5
+{txt}
+{com}. /*two generic attributes (random)*/
+. gen x1 =  runiform(-`s',`s')
+{txt}
+{com}. gen x2 =  runiform(-`s',`s')
+{txt}
+{com}. 
+. /*create a fix attribute */
+. gen x_fix = rnormal(0,1)
+{txt}
+{com}. 
+. /* parameters for distribution */
+. local mu_1  = 1
+{txt}
+{com}. local mu_2  = 2
+{txt}
+{com}. 
+. local sigma_1  = 0.5
+{txt}
+{com}. local sigma_2  = 0.5
+{txt}
+{com}. 
+. mata: b1 = `mu_1' :+ sort(J(`=`J'*`t'', 1, rnormal(`N',1,0,1)),1) :* `sigma_1'
+{res}{txt}
+{com}. mata: b2 = `mu_2' :+ sort(J(`=`J'*`t'', 1, rnormal(`N',1,0,1)),1) :* `sigma_2'
+{res}{txt}
+{com}. 
+. //mata: exp_b1 = exp(b1)
+. //mata: exp_b1 = exp(b2)
+. 
+. 
+. mata: b = b1 , b2
+{res}{txt}
+{com}. 
+. 
+. global individuals = "id_ind"
+{txt}
+{com}. global choice_sets = "id_cs"
+{txt}
+{com}. sort id_cs
+{txt}
+{com}. 
+. 
+. /*===================================================*/
+. /*====             DATA Generation             ======*/
+. /* Two (independent) normally distributed parameters */
+. /*===================================================*/
+. 
+. mata:
+{txt}{hline 49} mata (type {cmd:end} to exit) {hline}
+{com}: /* program a function to calculate observed regret */
+: function RRM_log_sim_data(real matrix x_n, 
+>                                                   real rowvector betas)
+> {c -(}
+>   real scalar i, j
+>   real matrix regret_n 
+>   
+>   regret_n = J(rows(x_n), cols(x_n), 0)
+>   for(i=1; i <= rows(x_n); ++i) {c -(} 
+>         for(j=1; j <= rows(x_n); ++j) {c -(} 
+>                 if (i!=j) {c -(} 
+>                         r_i = ln(1 :+ exp( betas :* ( x_n[j , . ] :-  x_n[i, . ])))                             
+>                         regret_n[i, . ] = regret_n[i, . ] :+ r_i                
+>                         {c )-} 
+>                 {c )-}         
+>         {c )-}
+> return(regret_n)
+> {c )-}
+
+:                 
+: // Generates a view of all attributes (M) x*
+: st_view(X = ., ., "x1 x2")
+{res}
+{com}: 
+: // Generates a view id choice situations
+: st_view(panvar_choice_sets = ., ., "id_cs")
+{res}
+{com}:                 
+: // set up panel information where each panel unit refers to a choice set 
+: task_n = panelsetup(panvar_choice_sets, 1)
+{res}
+{com}: 
+: // # of choice sets 
+: npanels_choice_sets = panelstats(task_n)[1]
+{res}
+{com}: 
+: for(t=1; t<=npanels_choice_sets; t++) {c -(}
+> 
+> 
+>         // read in data rows pertaining to subject n & store in a matrix suffixed _n
+>         x_n = panelsubmatrix(X, t, task_n) 
+>         b_n = panelsubmatrix(b, t, task_n) 
+>         
+>         
+>         /*Observed (deterministic) Regret*/
+>         R_i = rowsum(RRM_log_sim_data(x_n, b_n[1,])) /*take first row of block of parameters*/
+> 
+>     /* Type 1 error */
+>         epsilon  = -1*log(-log(runiform(rows(R_i),1,0,1)))
+>     /*Random regret */
+>         RR_i = R_i  :+ epsilon
+> 
+>     EXP_RR_i = exp(-RR_i)
+> 
+> 
+>         P_i   = EXP_RR_i :/ quadcolsum(EXP_RR_i, 1)
+> 
+>         choice_i =  (P_i         :==max(P_i))
+>         // collect all choices of choice situations (t) of individual (n)
+>           if (t==1)  choice = choice_i
+>           else       choice = choice   \ choice_i
+> 
+> {c )-}
+{res}
+{com}: // Creates a new Stata variable called "choice"    
+:  idx = st_addvar("float", "choice")
+{res}
+{com}: // save the content of Y on "choice" Stata variable
+:  st_store(., idx, choice)
+{res}
+{com}: end
+{txt}{hline}
+
+{com}. 
+. timer clear
+{txt}
+{com}. timer on 1
+{txt}
+{com}. mixrandregret choice x_fix, cluster(id_cs) group(id_cs) id(id_ind) nrep(1000) rand(x1 x2) alt(alternative) nocons 
+{txt}./mixRRM_gf0.mata
+
+{com}. *! mixRRM_gf0 1.1.0 12Feb2022
+. *! [aut & dev] Ziyue Zhu  &  Álvaro A. Gutiérrez-Vargas
+. 
+. 
+. mata: mata set matastrict off 
+{txt}
+{com}. 
+. /*=======================================================================*/     
+. /*===================       RRM FUNCTION        =========================*/     
+. /*=======================================================================*/
+. 
+. mata:
+{txt}{hline 49} mata (type {cmd:end} to exit) {hline}
+{com}: real matrix RRM_log(real matrix         x_n, 
+>                                         real rowvector  b, 
+>                                         real scalar     mu, 
+>                                         real scalar     gamma)  
+> {c -(}
+>         real scalar i, j ,r_m
+>         real matrix regret_n 
+>         
+>         regret_n = J(rows(x_n), cols(x_n), 0)
+>         for(i=1; i <= rows(x_n); ++i) {c -(} 
+>                 for(j=1; j <= rows(x_n); ++j) {c -(} 
+>                         if (i!=j) {c -(} 
+>                                 r_i = ln(gamma :+ exp((b :/ mu) :* (x_n[j, . ] :- x_n[i, . ])))                                 
+>                                 regret_n[i, . ] = regret_n[i, . ] :+ mu*r_i             
+>                                 {c )-} 
+>                         {c )-}         
+>                 {c )-}
+>         return(regret_n)
+> {c )-}
+{txt}note: variable r_m unused
+
+{com}: end
+{txt}{hline}
+
+{com}. 
+. ** updated RRM function **
+. mata:
+{txt}{hline 49} mata (type {cmd:end} to exit) {hline}
+{com}: real matrix RRM_log_v2(real matrix      x_n, 
+>                                         real rowvector  b)      
+> {c -(}
+>         real scalar i, j
+>         
+>         for(i = 1; i <= rows(x_n); ++i) {c -(} 
+>                 for(j = 1; j <= rows(x_n); ++j) {c -(} 
+>                     if (i!=j){c -(}
+>                         d_ijm = x_n[j, . ] :- x_n[i, . ]
+> 
+>                         if ((j == 2 & i == 1) | (j == 1)) d_im = d_ijm
+>                         else d_im = d_im \ d_ijm
+>                         {c )-}
+>                 {c )-}
+>                 regret_i = ln(1 :+ exp(b :* d_im))
+> 
+>                 if (i == 1) regret_n = colsum(regret_i)         
+>                 else regret_n = regret_n \ colsum(regret_i)
+>                 {c )-}
+>         
+>         return(regret_n)
+> {c )-}
+
+: end
+{txt}{hline}
+
+{com}. 
+. 
+. /*=======================================================================*/     
+. /*===================    MIXED RRM FUNCTION     =========================*/     
+. /*=======================================================================*/
+. 
+. version 12
+{txt}
+{com}. mata:
+{txt}{hline 49} mata (type {cmd:end} to exit) {hline}
+{com}: void mixRRM_gf0(transmorphic scalar MM,
+>                 real scalar todo, 
+>                 real rowvector b, 
+>                 real colvector  lnfj, /* <- lnfj is a colvector with all the individual loglikelihood constributions */
+>                 S, 
+>                 H)
+>  {c -(}
+>  
+>         /*---------------------------*/
+>         /*--- External Variables  ---*/
+>         /*---------------------------*/
+>         
+>         external mixr_T     // observations in the (long) data  [N x J x T]
+>         external mixr_CSID  // choice sets ID
+>         external mixr_IND   // individual ID
+>         external mixr_nrep  
+>         external mixr_np
+>         external mixr_kfix
+>         external mixr_krnd
+>         external mixr_krln
+>         external mixr_burn
+>         external mixr_corr
+>         external mixr_user
+> 
+>         nrep = mixr_nrep
+>         np   = mixr_np
+>         kfix = mixr_kfix
+>         krnd = mixr_krnd
+>         krln = mixr_krln
+>         burn = mixr_burn
+>         corr = mixr_corr
+>         user = mixr_user
+>         ID_IND = mixr_IND  // variable that stores Individuals 
+> 
+>         /*-----------------------------*/
+>         /*--- Variables Declaration ---*/
+>         /*-----------------------------*/
+>         
+>         real matrix subject     // general info information about individuals 
+>         real matrix N_subject   // intermediate step to extract into about num panels 
+> 
+>         /* Loop scalar variables */
+>         real scalar n // for individual
+>         real scalar t // for choice set
+>         real scalar i // alternative i 
+>         real scalar j // alternative j 
+>         real scalar m // index 
+>         real scalar n_rows // scalar for num rows
+>         real scalar n_cols // scalar for num columns
+>         
+>         /* Matrix explanatory and explained variable */
+>         real matrix Y // explained variable
+>         real matrix X // covariates
+>         
+>         /* Sub matrices per individual */
+>         real matrix r_i // r_i matrix with regret 
+>         real matrix x_n // sub matrix covariates individual n 
+>         real matrix y_n // sub matrix   choice   individual n 
+>         
+>         cons_demanded = st_global("cons_demanded")
+> 
+>         /*--------------------------*/
+>         /*--- variables creation ---*/
+>         /*--------------------------*/
+>         
+>         mixr_Y = moptimize_util_depvar(MM, 1)           // recovering the explained variable
+>         mixr_X = moptimize_init_eq_indepvars(MM, 1)     // recovering the explanatory variable
+>         
+>         if (cons_demanded=="YES"){c -(}
+>                 ASC = moptimize_init_eq_indepvars(MM,3) // 3rd equation estimates ASC
+>                 id_ASC_eq = moptimize_util_eq_indices(MM,3)
+>                 b_ASC = b[|id_ASC_eq|]  
+>         {c )-}  
+> 
+>         /*------------------------------------------------*/
+>         /*--- Parse Parameter vector (Random vs Fixed) ---*/
+>         /*------------------------------------------------*/
+>         
+>         B = b' // the program works with parameters (b) in column vector format (B = b') 
+> 
+>         kall = kfix + krnd // total Number of Parameters (kall) = fixed (kfix) + random (krand)
+>         if (kfix > 0) {c -(}
+>                 MFIX = B[|1,1\kfix,1|]
+>                 MFIX = MFIX :* J(kfix,nrep,1)   
+>         {c )-}
+>         
+>     /* Recover mean and SD */
+>         MRND = B[|(kfix+1),1\kall,1|] // recovering the mean of the random parameters parameters (MRAND, "M" for \mu)
+>         SRND = diag(B[|(kall+1),1\(kfix+2*krnd),1|])   // if the user only want independet distributions then only take the diagonal; no correlation for now
+>         
+>         /*------------------------------*/
+>         /*--- Compute log-likelihood ---*/
+>         /*------------------------------*/
+>         
+>         /* Set up panel information */
+>         subject = panelsetup(ID_IND,1) // input is [N x 1] vector "id", and output is [N_subject x 2] matrix "subject"
+>         N_subject = panelstats(subject)[1] // # of panel units (subjects), identified by number of rows in "panel"; given this 1 we recover the Num. of panels
+>         
+>         st_view(panvar = ., ., st_global("group_mata")) // panel information for ASC
+>         subject_ASC = panelsetup(panvar, 1)
+>         npanels = panelstats(subject_ASC)[1]
+>         
+>         moptimize_init_by(MM, ID_IND) // tell Stata that log-likelihood is computed at subject level
+>         
+>         if (user == 1) external mixr_USERDRAWS
+>         
+>         /* Object P */
+>         P = J(np,1,0) // will store individual contributions to the LL of each individual
+>         
+>         m = 1                           
+>         /* Loop over individuals (npanels) */
+>         for(n=1; n <= N_subject; n++) {c -(}
+>                 
+>                 if (user == 1) {c -(}
+>                         ERR = invnormal(mixr_USERDRAWS[|1,(1+nrep*(n-1))\krnd,(nrep*n)|])
+>                 {c )-}
+>                 else {c -(}
+>              /* Regular (non-scrambled) Halton integration */
+>                         ERR = invnormal(halton(nrep,krnd,(1+burn+nrep*(n-1)))')
+>                 {c )-}
+>                 
+>                 /* Modify parameters to construct the [beta = mu + sigma * draw] structure. */
+>                 if (kfix > 0) BETA = MFIX \ (MRND :+ (SRND*ERR)) 
+>                 else BETA = MRND :+ (SRND*ERR) // get all random variables
+>                  
+>                 /* Log-normal distribution */
+>                 if (krln > 0){c -(}
+>                     if ((kall-krln) > 0) {c -(}
+>                 BETA = BETA[|1,1\(kall-krln),nrep|] \ exp(BETA[|(kall-krln+1),1\kall,nrep|])
+>                 {c )-}
+>                 else {c -(}
+>                 BETA = exp(BETA)
+>                 {c )-}
+>                 {c )-}
+> 
+>                 /* Object R */
+>                 R = J(1,nrep,1) // will store the product of sequences of choices made by the same individual
+>                 
+>                 /* Looping over choice situations (t) of individual (n) */
+>                 t = 1 
+>                 nc = mixr_T[m,1] // number of choice sets
+>                 for(t=1; t<=nc; t++) {c -(}
+>                 
+>                     /* Parse the matrix X and Y at the level of choice situation (t) */
+>                         YMAT = mixr_Y[|m, 1\(m+mixr_CSID[m,1]-1), cols(mixr_Y)|]
+>                         XMAT = mixr_X[|m, 1\(m+mixr_CSID[m,1]-1), cols(mixr_X)|]
+>                         
+>                         /* Shape of block individual n */       
+>                         n_rows=rows(XMAT) // number of faced alternatives
+>                         n_cols=cols(XMAT) // number of covariates 
+>                                         
+>                         ER_rep = J(n_rows, nrep, 0) // store the regret of each draws
+>                         
+>                         if (cons_demanded=="YES") {c -(}
+>                            asc = panelsubmatrix(ASC, 1, subject_ASC)
+>                            ASC_prod = asc*b_ASC'
+>                         {c )-}
+>                         
+>                         for(rr=1; rr<=nrep; rr++) {c -(}
+>                                         regret_draw_r = RRM_log_v2(XMAT,BETA[.,rr]') // create regret for each alternative 
+>                    
+>                            if (cons_demanded=="YES") {c -(} 
+>                                    ER_rep[ .,rr] =rowsum(regret_draw_r :+ ASC_prod) //generate the row sum with ASC condition
+>                                         {c )-}
+>                            else if (cons_demanded=="NO"){c -(}
+>                                    ER_rep[ .,rr] =rowsum(regret_draw_r) 
+>                                          {c )-}
+>                                          
+>                         {c )-}
+>            
+>                         ER = exp(-ER_rep) // the negative of the regret
+>                         ER = (ER :/ colsum(ER,1)) 
+>                         
+>                         R = R :* colsum(YMAT :* ER, 1) // generates the product of repeated choices from the same individual
+>                         
+>                         m = m + mixr_CSID[m,1] // move the index for the next choice situation
+>                         {c )-}
+> 
+>                 P[n, 1] = mean(R',1) // average all the probabilities over all the draws
+>                 {c )-}
+>                 
+>          /* The vector containing the LL of every individual is simply the log of the probability. */
+>          lnfj = ln(P) 
+> {c )-}
+{txt}note: argument todo unused
+note: argument S unused
+note: argument H unused
+note: variable corr set but not used
+note: variable i unused
+note: variable j unused
+note: variable n_cols set but not used
+note: variable Y unused
+note: variable X unused
+note: variable r_i unused
+note: variable x_n unused
+note: variable y_n unused
+note: variable npanels set but not used
+
+{com}: end
+{txt}{hline}
+
+{com}. 
+. 
+. 
+. /*=======================================================================*/     
+. /*==================  MIXED RRM PREDICT FUNCTION  =======================*/     
+. /*=======================================================================*/
+. 
+. mata:
+{txt}{hline 49} mata (type {cmd:end} to exit) {hline}
+{com}: real matrix pbb_pred(real matrix X, real matrix ASC, real colvector panvar)
+> {c -(}
+> 
+>         /*---------------------------*/
+>         /*--- External Variables  ---*/
+>         /*---------------------------*/
+>         
+>         external mixrpre_X
+>         external mixrpre_T
+>         external mixrpre_CSID
+>         external mixrpre_np
+>     external b_hat
+>         external b_all
+>         external ASC_hat 
+>         external ASC
+>         external mixr_IND
+>         
+>         np = mixrpre_np
+>         command = st_local("cmd")
+>         ID_IND = mixr_IND  // variable that stores Individuals 
+>         nrep = strtoreal(st_local("nrep"))
+>         kfix = st_numscalar("e(kfix)")
+>         krnd = st_numscalar("e(krnd)")
+>         krln = st_numscalar("e(krln)")
+>         burn = strtoreal(st_local("burn"))
+>         user = st_numscalar("e(userdraws)")
+>         
+>         cons_demanded = st_global("cons_demanded")
+>         proba = st_local("proba") 
+> 
+>         /*------------------------------*/
+>         /*--- Parse Parameter vector ---*/
+>         /*------------------------------*/
+>         
+>         B_hat = b_all' 
+> 
+>         kall = kfix + krnd
+>         
+>         if (kfix > 0) {c -(}
+>                 MFIX_hat = B_hat[|1,1\kfix,1|]
+>                 MFIX_hat = MFIX_hat :* J(kfix,nrep,1)   
+>         {c )-}
+>         
+>         MRND_hat = B_hat[|(kfix+1),1\kall,1|] 
+>         SRND_hat = diag(B_hat[|(kall+1),1\(kfix+2*krnd),1|]) 
+>         
+>         /*--------------------------*/
+>         /*--- Compute Prediction ---*/
+>         /*--------------------------*/
+>         
+>         /* Set up panel information */
+>         subject = panelsetup(ID_IND,1)  
+>         N_subject = panelstats(subject)[1] 
+> 
+>         /* Panel information for ASC */
+>         subject_ASC = panelsetup(panvar, 1)
+>         npanels = panelstats(subject_ASC)[1]
+>         
+>         if (user == 1) external mixr_USERDRAWS
+>                 
+>         m = 1
+> 
+>         for(n=1; n <= N_subject; n++) {c -(} 
+>           
+>             if (user == 1) {c -(}
+>                         ERR = invnormal(mixr_USERDRAWS[|1,(1+nrep*(n-1))\krnd,(nrep*n)|])
+>                 {c )-}
+>                 else {c -(}
+>                         ERR = invnormal(halton(nrep,krnd,(1+burn+nrep*(n-1)))')
+>                 {c )-}
+>                 
+>                 if (kfix > 0) BETA_hat = MFIX_hat \ (MRND_hat :+ (SRND_hat*ERR)) 
+>                 else BETA_hat = MRND_hat :+ (SRND_hat*ERR)
+>                 
+>                 if (krln > 0){c -(}
+>                     if ((kall-krln) > 0) {c -(}
+>                 BETA_hat = BETA_hat[|1,1\(kall-krln),nrep|] \ exp(BETA_hat[|(kall-krln+1),1\kall,nrep|])
+>                 {c )-}
+>                 else {c -(}
+>                 BETA_hat = exp(BETA_hat)
+>                 {c )-}
+>                 {c )-}
+>                 
+>                 t = 1 
+>                 nc = mixrpre_T[m,1] 
+>                 for(t=1; t<=nc; t++) {c -(}
+> 
+>                         XMAT = mixrpre_X[|m, 1\(m+mixrpre_CSID[m,1]-1), cols(mixrpre_X)|]
+> 
+>                         n_rows=rows(XMAT) 
+>                         n_cols=cols(XMAT)
+>                         
+>                         if (cons_demanded=="YES") {c -(}
+>                            asc = panelsubmatrix(ASC, 1, subject_ASC)
+>                            ASC_prod = asc*ASC_hat'
+>                         {c )-}
+>                          
+>                         ER_rep_hat = J(n_rows, nrep, 0) 
+>                         for(rr = 1; rr <= nrep; rr++) {c -(}
+>                                    regret_draw_hat = RRM_log_v2(XMAT,BETA_hat[.,rr]') 
+> 
+>                            if (cons_demanded=="YES") {c -(}        
+>                                     ER_rep_hat[., rr] =rowsum(regret_draw_hat :+ ASC_prod)         
+>                                         {c )-}
+>                            else if (cons_demanded=="NO"){c -(}
+>                                    ER_rep_hat[ .,rr] =rowsum(regret_draw_hat) 
+>                                          {c )-}
+>                         {c )-}
+>                         
+>                         ER_hat = exp(-ER_rep_hat) 
+>                         p_hat_i = (ER_hat :/ colsum(ER_hat,1))
+>                         
+>                         N_cs = mixrpre_CSID[1]
+>                         /* Object output */
+>                 p_out_cs = J(N_cs,1,0)
+>                         regret_out_cs = J(N_cs,1,0)     
+>                         
+>                         for(aa = 1; aa <= N_cs; aa++) {c -(}
+>                                 p_out_cs[aa,1] = mean(p_hat_i[aa,.]', 1)
+>                                 regret_out_cs[aa,1] = mean(ER_rep_hat[aa,.]', 1)
+>                         {c )-}
+>                         
+>                         m = m + mixrpre_CSID[m,1]
+>                         
+>                         /* Probability prediction: proba option [default] */    
+>                 if (proba != "") {c -(}
+>                             if (t==1) p_hat_cs = p_out_cs       
+>                             else          p_hat_cs = p_hat_cs \ p_out_cs        
+>                         {c )-}
+>                     else{c -(} 
+>             /* Linear prediction: xb option */ 
+>                             if (t==1) regret_hat_cs = regret_out_cs     
+>                             else          regret_hat_cs = regret_hat_cs \ regret_out_cs 
+>                         {c )-}
+>                 {c )-}
+>                 
+>                 /* Append individuals */
+>             if (proba != "") {c -(}
+>                         if (n==1) p_hat = p_hat_cs      
+>                         else      p_hat = p_hat \ p_hat_cs      
+>                         {c )-}
+>                 else{c -(} 
+>                         if (n==1) regret_hat = regret_hat_cs    
+>                         else      regret_hat = regret_hat \ regret_hat_cs       
+>                         {c )-}
+>         {c )-}
+>         
+>         /* Output prediction */
+>         if (proba != "") return(p_hat)
+>         else return(regret_hat)
+> {c )-}
+{txt}note: argument X unused
+note: variable b_hat unused
+note: variable np set but not used
+note: variable command set but not used
+note: variable npanels set but not used
+note: variable n_cols set but not used
+
+{com}: end
+{txt}{hline}
+
+{com}. 
+. 
+. 
+. /*=======================================================================*/     
+. /*==================  INDIVIDUAL LEVEL PARAMETERS  ======================*/     
+. /*=======================================================================*/
+. 
+. version 9.2
+{txt}
+{com}. mata: 
+{txt}{hline 49} mata (type {cmd:end} to exit) {hline}
+{com}: function mixr_beta(string scalar B_s)
+> {c -(}
+> 
+>         /*---------------------------*/
+>         /*--- External Variables  ---*/
+>         /*---------------------------*/
+>         
+>         external mixrbeta_X
+>         external mixrbeta_Y
+>         external mixrbeta_T
+>         external mixrbeta_CSID
+>         external mixrbeta_PB
+>         external mixrbeta_np
+>         external mixrbeta_ID
+>         external b_beta
+>         external b_all
+>         external ASC_beta
+>         external ASC
+> 
+>         np = mixrbeta_np
+>         ID_IND = mixrbeta_ID  // variable that stores Individuals 
+>         command = st_local("cmd")
+>         nrep = strtoreal(st_local("nrep"))
+>         kfix = st_numscalar("e(kfix)")
+>         krnd = st_numscalar("e(krnd)")
+>         krln = st_numscalar("e(krln)")
+>         burn = strtoreal(st_local("burn"))
+>         user = st_numscalar("e(userdraws)")
+>         
+>         //cons_demanded = st_global("cons_demanded")
+> 
+>         /*------------------------------*/
+>         /*--- Parse Parameter vector ---*/
+>         /*------------------------------*/
+>         
+>         B_beta = b_all'
+> 
+>         kall = kfix + krnd
+>         
+>         if (kfix > 0) {c -(}
+>                 MFIX_beta = B_beta[|1,1\kfix,1|]
+>                 MFIX_beta = MFIX_beta :* J(kfix,nrep,1) 
+>         {c )-}
+>         
+>         MRND_beta = B_beta[|(kfix+1),1\kall,1|] 
+>         SRND_beta = diag(B_beta[|(kall+1),1\(kfix+2*krnd),1|]) 
+>         
+>         /*--------------------------*/
+>         /*--- Compute Prediction ---*/
+>         /*--------------------------*/
+>         
+>         /* Set up panel information */
+>         subject = panelsetup(ID_IND,1)  
+>         N_subject = panelstats(subject)[1] 
+>                                    
+>         /* Panel information for ASC */         
+>         st_view(panvar = ., ., st_global("group_mata")) // panel information for ASC
+>         subject_ASC = panelsetup(panvar, 1)
+>         npanels = panelstats(subject_ASC)[1]
+>                         
+>         if (user == 1) external mixr_USERDRAWS
+>         
+>         /* Object P */
+>         P = J(np,1,0)
+>         
+>         m = 1
+>         /* Loop over individuals (npanels) */
+>         for(n=1; n <= N_subject; n++) {c -(}
+>                 
+>                 if (user == 1) {c -(}
+>                         ERR = invnormal(mixr_USERDRAWS[|1,(1+nrep*(n-1))\krnd,(nrep*n)|])
+>                 {c )-}
+>                 else {c -(}
+>              /* Regular (non-scrambled) Halton integration */
+>                         ERR = invnormal(halton(nrep,krnd,(1+burn+nrep*(n-1)))')
+>                 {c )-}
+>                 
+>                 
+>                 /* Modify parameters to construct the [beta = mu + sigma * draw] structure. */
+>                 if (kfix > 0) BETA_new = MFIX_beta \ (MRND_beta :+ (SRND_beta*ERR)) 
+>                 else BETA_new = MRND_beta :+ (SRND_beta*ERR) // get all random variables
+>                  
+>                 /* Log-normal distribution */
+>                 if (krln > 0){c -(}
+>                     if ((kall-krln) > 0) {c -(}
+>                 BETA_new = BETA_new[|1,1\(kall-krln),nrep|] \ exp(BETA_new[|(kall-krln+1),1\kall,nrep|])
+>                 {c )-}
+>                 else {c -(}
+>                 BETA_new = exp(BETA_new)
+>                 {c )-}
+>                 {c )-}
+> 
+>                 /* Object R */
+>                 R = J(1,nrep,1) 
+>                 
+>                 /* Looping over choice situations (t) of individual (n) */
+>                 t = 1 
+>                 nc = mixrbeta_T[m,1] // number of choice sets
+>                 for(t=1; t<=nc; t++) {c -(}
+>                 
+>                     /* Parse the matrix X and Y at the level of choice situation (t) */
+>                         YMAT = mixrbeta_Y[|m, 1\(m+mixrbeta_CSID[m,1]-1), cols(mixrbeta_Y)|]
+>                         XMAT = mixrbeta_X[|m, 1\(m+mixrbeta_CSID[m,1]-1), cols(mixrbeta_X)|]
+>                         
+>                         /* Shape of block individual n */       
+>                         n_rows=rows(XMAT) // number of faced alternatives
+>                         n_cols=cols(XMAT) // number of covariates 
+>                                                                 
+>                         if ("${c -(}cons_demanded{c )-}"=="YES") {c -(}
+>                            asc = panelsubmatrix(ASC, 1, subject_ASC)
+>                            ASC_prod = asc*ASC_beta'
+>                         {c )-}
+>                          
+>                         ER_rep_beta = J(n_rows, nrep, 0) 
+>                         for(rr = 1; rr <= nrep; rr++) {c -(}
+>                                    regret_draw_beta = RRM_log_v2(XMAT,BETA_new[.,rr]') 
+> 
+>                            if ("${c -(}cons_demanded{c )-}"=="YES") {c -(}        
+>                                     ER_rep_beta[., rr] =rowsum(regret_draw_beta :+ ASC_prod)       
+>                                         {c )-}
+>                            else if ("${c -(}cons_demanded{c )-}"=="NO"){c -(}
+>                                    ER_rep_beta[ .,rr] =rowsum(regret_draw_beta) 
+>                                          {c )-}
+>                         {c )-}
+>                         
+>                         ER_beta = exp(-ER_rep_beta) 
+>                         ER_beta = (ER_beta :/ colsum(ER_beta,1)) 
+>                         
+>                         R = R :* colsum(YMAT :* ER_beta, 1) 
+>                         m = m + mixrbeta_CSID[m,1] 
+>                         {c )-}
+> 
+>                 P[n, 1] = mean(R',1) 
+>             mixrbeta_PB[n,.] = mean((R :* BETA_new)',1) / P[n,1]
+> 
+>                 {c )-}       
+> {c )-}
+{txt}note: argument B_s unused
+note: variable b_beta unused
+note: variable command set but not used
+note: variable npanels set but not used
+note: variable n_cols set but not used
+
+{com}: end     
+{txt}{hline}
+
+{com}. 
+. exit
+
+{txt}end of do-file
+{res}
+{txt}initial:{col 16}log likelihood = {res:-3295.8369}
+alternative:{col 16}log likelihood = {res:-3293.2333}
+rescale:{col 16}log likelihood = {res:-2029.1781}
+rescale eq:{col 16}log likelihood = {res:-1519.6042}
+{res}{txt}Iteration 0:{space 3}log likelihood = {res:-1519.6042}  (not concave)
+Iteration 1:{space 3}log likelihood = {res:-856.83168}  (not concave)
+Iteration 2:{space 3}log likelihood = {res: -741.5253}  
+Iteration 3:{space 3}log likelihood = {res: -723.0511}  
+Iteration 4:{space 3}log likelihood = {res: -715.6411}  
+Iteration 5:{space 3}log likelihood = {res:-715.61083}  
+Iteration 6:{space 3}log likelihood = {res:-715.61076}  
+Iteration 7:{space 3}log likelihood = {res:-715.61076}  
+{res}
+{txt}Case ID variable: id_cs{col 48}Number of cases{col 67}= {res}      3000
+{txt}Alternative variable: alternative{col 48}
+Random variable(s): x1 x2{col 48}
+
+{col 34}(Std. Err. adjusted for{res} 3000{txt} clusters in id_cs)
+
+Mixed random regret model{col 49}Number of obs{col 67}= {res}     9,000
+{txt}{col 49}Wald chi2({res}3{txt}){col 67}= {res}    376.52
+{txt}Log likelihood = {res}-715.61076{txt}{col 49}Prob > chi2{col 67}= {res}    0.0000
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}      choice{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      z{col 46}   P>|z|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}Mean         {txt}{c |}
+{space 7}x_fix {c |}{col 14}{res}{space 2} .0080134{col 26}{space 2} .0398466{col 37}{space 1}    0.20{col 46}{space 3}0.841{col 54}{space 4}-.0700846{col 67}{space 3} .0861113
+{txt}{space 10}x1 {c |}{col 14}{res}{space 2} .8744131{col 26}{space 2} .0504259{col 37}{space 1}   17.34{col 46}{space 3}0.000{col 54}{space 4} .7755801{col 67}{space 3}  .973246
+{txt}{space 10}x2 {c |}{col 14}{res}{space 2} 1.785866{col 26}{space 2} .0924437{col 37}{space 1}   19.32{col 46}{space 3}0.000{col 54}{space 4}  1.60468{col 67}{space 3} 1.967053
+{txt}{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}SD           {txt}{c |}
+{space 10}x1 {c |}{col 14}{res}{space 2}-.3541562{col 26}{space 2} .0353984{col 37}{space 1}  -10.00{col 46}{space 3}0.000{col 54}{space 4}-.4235359{col 67}{space 3}-.2847765
+{txt}{space 10}x2 {c |}{col 14}{res}{space 2}-.0105257{col 26}{space 2} .0884263{col 37}{space 1}   -0.12{col 46}{space 3}0.905{col 54}{space 4}-.1838382{col 67}{space 3} .1627867
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+
+The sign of the estimated standard deviations is irrelevant: interpret them as
+being positive
+
+Note: we don't estimate random regret model to get inital values in mixed version.{col 48}
+Users are advised to estimate on their own to make comparsion{col 48}
+
+{com}. timer off 1
+{txt}
+{com}. timer list
+{res}   1:   7982.38 /        1 =    7982.3830
+{txt}
+{com}. 
+. 
+. 
+. 
+. bys id_cs: egen choice_wide = max(choice*alternative)
+{txt}
+{com}. 
+. drop choice 
+{txt}
+{com}. 
+. reshape wide x1 x2 x_fix   , i(id_cs) j(alternative)
+{txt}(note: j = 1 2 3)
+
+Data{col 36}long{col 43}->{col 48}wide
+{hline 77}
+Number of obs.                 {res}    9000   {txt}->{res}    3000
+{txt}Number of variables            {res}       8   {txt}->{res}      13
+{txt}j variable (3 values)       {res}alternative   {txt}->   (dropped)
+xij variables:
+                                     {res}x1   {txt}->   {res}x11 x12 x13
+                                     x2   {txt}->   {res}x21 x22 x23
+                                  x_fix   {txt}->   {res}x_fix1 x_fix2 x_fix3
+{txt}{hline 77}
+
+{com}. 
+. export excel using "C:\Users\u0133260\Documents\_local_git_repos\mixrandregret\certification\apollo_benckmark\data.xls", firstrow(variables) nolabel replace
+{res}{txt}file C:\Users\u0133260\Documents\_local_git_repos\mixrandregret\certification\apollo_benckmark\data.xls saved
+
+{com}. 
+. 
+. log close
+      {txt}name:  {res}<unnamed>
+       {txt}log:  {res}C:\Users\u0133260\Documents\_local_git_repos\mixrandregret\certification\apollo_benckmark\mixrandregret_results.smcl
+  {txt}log type:  {res}smcl
+ {txt}closed on:  {res}20 Apr 2022, 11:35:06
+{txt}{.-}
+{smcl}
+{txt}{sf}{ul off}

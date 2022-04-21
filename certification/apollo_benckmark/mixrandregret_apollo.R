@@ -1,5 +1,6 @@
 library(haven)
 library(apollo)
+library(readxl)
 #### LOAD DATA ####
 
 database =as.data.frame( read_excel("data.xls"))
@@ -17,7 +18,7 @@ apollo_control = list(
   modelDescr      = "Mixed random regret logit model on simulated data",
   indivID         = "id_ind",  
   mixing          = TRUE,
-  nCores          = 10,
+  nCores          = 1,
   outputDirectory = NULL
 )
 
@@ -77,8 +78,6 @@ apollo_probabilities=function(apollo_beta, apollo_inputs, functionality="estimat
   ### Attach inputs and detach after function exit
   apollo_attach(apollo_beta, apollo_inputs)
   on.exit(apollo_detach(apollo_beta, apollo_inputs))
-  
-  
   
   ### x1 differences
 # dx1_1 = ( x11 -  x11 ) 
@@ -163,9 +162,6 @@ apollo_probabilities=function(apollo_beta, apollo_inputs, functionality="estimat
   return(P)
 }
 
-
-
-
 model = apollo_estimate(apollo_beta, apollo_fixed,apollo_probabilities, apollo_inputs)
 
 # ################################################################# #
@@ -175,7 +171,7 @@ model = apollo_estimate(apollo_beta, apollo_fixed,apollo_probabilities, apollo_i
 # ----------------------------------------------------------------- #
 #---- FORMATTED OUTPUT (TO SCREEN)                               ----
 # ----------------------------------------------------------------- #
-# apollo_modelOutput(model)
+apollo_modelOutput(model)
 # 
 # 
 # Model run by u0133260 using Apollo 0.2.7 on R 4.1.2 for Windows.
@@ -221,5 +217,15 @@ model = apollo_estimate(apollo_beta, apollo_fixed,apollo_probabilities, apollo_i
 # mu_x2    1.808286     0.09631     18.7764     0.09757       18.5327
 # sd_x2   -0.097858     0.08669     -1.1288     0.11758       -0.8323
 # b_fix    0.008325     0.04017      0.2072     0.04067        0.2047
+
+
+conditionals = apollo_conditionals(model,
+                                   apollo_probabilities,
+                                   apollo_inputs)
+
+
+(posterior_x1 <- hist(conditionals$b_x1$post.mean))
+
+(posterior_x2 <-hist(conditionals$b_x2$post.mean))
 
 

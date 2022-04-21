@@ -5,12 +5,19 @@
 /*====      Setting up        ======*/
 /*==================================*/
 clear all
+
 /*You need to adjust this and change it for the folder where you will be developing the command.*/
 
 global route = "C:\Users\u0133260\Documents\_local_git_repos\mixrandregret\src"
 cd "$route"
+
+log using "C:\Users\u0133260\Documents\_local_git_repos\mixrandregret\certification\apollo_benckmark\mixrandregret_results.smcl"
+
+
 /*This will search for the adofile of the command.*/
 findfile mixrandregret.ado
+
+
 
 
 set seed 777
@@ -151,6 +158,14 @@ for(t=1; t<=npanels_choice_sets; t++) {
  st_store(., idx, choice)
 end
 
+timer clear
+timer on 1
+mixrandregret choice x_fix, cluster(id_cs) group(id_cs) id(id_ind) nrep(1000) rand(x1 x2) alt(alternative) nocons 
+timer off 1
+timer list
+
+
+
 
 bys id_cs: egen choice_wide = max(choice*alternative)
 
@@ -160,4 +175,6 @@ reshape wide x1 x2 x_fix   , i(id_cs) j(alternative)
 
 export excel using "C:\Users\u0133260\Documents\_local_git_repos\mixrandregret\certification\apollo_benckmark\data.xls", firstrow(variables) nolabel replace
 
+
+log close
 
