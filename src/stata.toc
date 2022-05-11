@@ -1,0 +1,10 @@
+v 1
+p mixrandregret Mixed Random Regret Minimization Models using Stata
+* Author: Ziyue Zhu. KU Leuven. 
+* Support: ziyue.zhu@student.kuleuven.be
+
+* Author: Álvaro A. Gutiérrez Vargas. ORSTAT, KU Leuven. 
+* Support: alvaro.gutierrezvargas@kuleuven.be
+
+* Author: Martina Vandebroek. ORSTAT, KU Leuven. 
+* Support: martina.vandebroek@kuleuven.be

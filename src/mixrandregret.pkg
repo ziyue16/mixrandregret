@@ -1,0 +1,38 @@
+v 1
+
+d mixrandregret: Mixed Random Regret Minimization Models using Stata
+d
+d mixrandregret command utilizes the mixed random regret minimization model 
+d described in Hensher et al. (2016), which is a mixed version of the classic 
+d random regret minimization model introduced in Chorus. C. (2010). 
+d mixrandregret extends the randregret  (Gutiérrez-Vargas et al, 2021) and 
+d allows to specify normal and log-normally distributed taste parameters 
+d inside the regret function. The command uses maximum simulated likelihood
+d  for estimation (Train. K., 2003). Users can obtain the predicted 
+d probabilities and predicted regret from the model using the mixrpred 
+d command. Individual-level parameters can also be obtained using the mixrbeta
+d command.
+d
+d
+d KW: random regret minimization
+d KW: discrete choice models
+d KW: semi-compensatory behavior
+d
+d Requires: Stata version 12.0
+d
+d Author: Ziyue Zhu. KU Leuven. 
+d Support: ziyue.zhu@student.kuleuven.be
+d
+d Author: Álvaro A. Gutiérrez Vargas. ORSTAT, KU Leuven. 
+d Support: alvaro.gutierrezvargas@kuleuven.be
+d
+d Author: Martina Vandebroek. ORSTAT, KU Leuven. 
+d Support: martina.vandebroek@kuleuven.be
+d
+d Distribution-Date: 20220511
+d
+f mixrandregret.ado
+f mixrandregret.sthlp
+f mixrpred.ado
+f mixrbeta.ado
+f mixRRM_gf0.mata
