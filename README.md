@@ -23,12 +23,12 @@
 
 ``` 
 *Describe mixrandregret
-net describe mixrandregret, from("")
+net describe mixrandregret, from("https://raw.githubusercontent.com/ziyue16/mixrandregret/master/src/")
 
 
 *Install mixrandregret
 cap ado uninstall mixrandregret
-net install mixrandregret, from("")
+net install mixrandregret, from("https://raw.githubusercontent.com/ziyue16/mixrandregret/master/src/")
 ```
 
 
