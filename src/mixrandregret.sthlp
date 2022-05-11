@@ -202,7 +202,7 @@ martina.vandebroek@kuleuven.be>
 {title:References}
 
 {marker hensher2016}{...}
-{phang} Hensher, David A and Greene, William H and Ho, Chinh Q.
+{phang} Hensher, David A and Greene, William H and Ho, Chinh Q. 2016
 {browse "https://ascelibrary.org/doi/abs/10.1061/%28ASCE%29TE.1943-5436.0000827":Random regret minimization and random utility maximization in the presence of preference heterogeneity: an empirical contrast}.
 {it:Journal of Transportation Engineering} Volume 142 Number 4: pp. 04016009.
 
@@ -212,7 +212,7 @@ martina.vandebroek@kuleuven.be>
 {it:European Journal of Transport and Infrastructure Research} 10: pp. 181-196.
 
 {marker gutierrez2021}{...}
-{phang}Gutiérrez-Vargas. Á. 2021.
+{phang}Gutiérrez-Vargas. Á., Meulders. M., and Vandebroek. M. 2021.
 {browse "https://www.stata-journal.com/article.html?article=st0649":randregret: A command for fitting random regret minimization models using Stata}.
 {it:The Stata Journal} Volume 21 Number 3: pp. 626-658.
 
