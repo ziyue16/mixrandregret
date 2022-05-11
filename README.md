@@ -54,15 +54,15 @@ Consider the following toy example that contains the data for two individuals wh
 
 A mixed random regret model where x_rnd has a normally distributed coefficient and x_fix has a fixed coefficient, and ASCs are suppressed can be specified as follows:
 ```
-        . mixrandregret choice x_fix, group(id_cs) id(id_ind) rand(x_rnd) alternatives(alt) nocons
+  . mixrandregret choice x_fix, group(id_cs) id(id_ind) rand(x_rnd) alternatives(alt) nocons
 ```
 A model where x_rnd has a lognormally distributed coefficient can be specified as follows:
 ```
-        . mixrandregret choice x_fix, group(id_cs) id(id_ind) rand(x_rnd) alternatives(alt) ln(1) nocons
+  . mixrandregret choice x_fix, group(id_cs) id(id_ind) rand(x_rnd) alternatives(alt) ln(1) nocons
 ```
 Use alternative 1 as base alternative to calculate ASC can be specified as follows:
 ```
-        . mixrandregret choice x_fix, group(id_cs) id(id_ind) rand(x_rnd) alternatives(alt) ln(1) basealternative(1)
+  . mixrandregret choice x_fix, group(id_cs) id(id_ind) rand(x_rnd) alternatives(alt) ln(1) basealternative(1)
 ```
 
 ```mixrandregret``` does't estimate random regret model to get inital values in mixed version. Users are advised to estimate on their own to make comparsion.
