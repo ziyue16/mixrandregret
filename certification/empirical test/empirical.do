@@ -31,6 +31,11 @@ mixrandregret choice cost, group(ncs) id(respondent_id) nrep(1000) rand( badqual
 
 timer off 1
 
+mixrpred p_regret, xb
+mixrpred p, xb
+
+mixrbeta badqualityclinicalservices distancetofacilitylong attitudeunkindnotsupportive medicalequipmentdrugsnotavail referralservicesnotavailable, plot saving(betas) replace
+
 * mixed logit *
 timer on 2
 
