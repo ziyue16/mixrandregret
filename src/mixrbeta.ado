@@ -18,7 +18,7 @@ program define mixrbeta
 
 	** Mark the prediction sample **
 	marksample touse, novarlist
-	markout `touse' `e(depvar)' `e(indepvars)' `e(group)' `e(id)' `e(basealternative)' `e(alternatives)'
+	markout `touse' `e(depvar)' `e(indepvars)' `e(group)' `e(id)' `e(alternatives)'
 
 	** Mark groups with no chosen alternatives due to missing data **
 	tempvar cho
@@ -135,7 +135,7 @@ program define mixrbeta
 		// coefficients ASC
 		matrix `ASC_beta' =J(1, 1, 0)
 	}
-		
+	
 	mata: b_beta= st_matrix("`b_beta'")
 	mata: b_all= st_matrix("`b_all'")
 	mata: ASC_beta= st_matrix("`ASC_beta'")

@@ -20,7 +20,7 @@ program define mixrpred, eclass
 		
 		** Mark the prediction sample **
 		marksample touse, novarlist
-		markout `touse' `e(indepvars)' `e(group)' `e(id)' `e(basealternative)' `e(alternatives)'
+		markout `touse' `e(indepvars)' `e(group)' `e(id)' `e(alternatives)'
 		
 		** Generate variables used to sort data **
 		tempvar sorder altid
