@@ -69,7 +69,7 @@ program define mixrbeta
 	
 	** Sort data **
 	sort `e(id)' `e(group)'
-
+	
 	** Set Mata matrices to be used in prediction routine **
 	local rhs `e(indepvars)'
 	local lhs `e(depvar)'
@@ -80,19 +80,9 @@ program define mixrbeta
 	mata: mixrbeta_CSID = st_data(., st_local("csid"))
 	mata: mixrbeta_ID = st_data(., st_local("id"), st_local("last"))
 	
-	** Create dataset containing beta estimates **
-	drop _all
-	qui set obs `np'
-	qui gen double `id' = .
-	foreach var of local rhs {
-		qui gen double `var' = .
-	}
-	mata: st_store(., st_local("id"), mixrbeta_ID)
-	mata: st_view(mixrbeta_PB=., ., tokens(st_local("rhs")))
-	
-	** Restore data **
-	restore
-	preserve
+	** panvar **
+	mata: st_view(panvar = ., ., "`e(group)'")
+	mata: mixrbeta_pan = panvar
 	
 	** Parsing parameter vector **
 	tempname b_all b_beta ASC_beta
@@ -140,7 +130,17 @@ program define mixrbeta
 	mata: b_all= st_matrix("`b_all'")
 	mata: ASC_beta= st_matrix("`ASC_beta'")
 	
-	mata: mixr_beta("`b_beta'")
+	** Create dataset containing beta estimates **
+	drop _all
+	qui set obs `np'
+	qui gen double `id' = .
+	foreach var of local rhs {
+		qui gen double `var' = .
+	}
+	mata: st_store(., st_local("id"), mixrbeta_ID)
+	mata: st_view(mixrbeta_PB=., ., tokens(st_local("rhs")))
+
+	mata: mixr_beta("`b_beta'", mixrbeta_pan)
 	
 	keep `id' `varlist'
 

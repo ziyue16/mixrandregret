@@ -208,7 +208,7 @@ void mixRRM_gf0(transmorphic scalar MM,
 			ER = (ER :/ colsum(ER, 1)) 
 			
 			R = R :* colsum(YMAT :* ER, 1) // product of repeated choices from the same individual
-			
+
 			m = m + mixr_CSID[m, 1] // move the index for the next choice situation
 		}
 
@@ -283,7 +283,7 @@ real matrix pbb_pred(real matrix X, real matrix ASC, real colvector panvar)
 	/* Panel information for ASC */
 	subject_ASC = panelsetup(panvar, 1)
 	npanels = panelstats(subject_ASC)[1]
-	
+
 	if (user == 1) external mixr_USERDRAWS
 
 	m = 1
@@ -322,7 +322,7 @@ real matrix pbb_pred(real matrix X, real matrix ASC, real colvector panvar)
 				asc = panelsubmatrix(ASC, 1, subject_ASC)
 				ASC_prod = asc*ASC_hat'
 			}
-			
+
 			ER_rep_hat = J(n_rows, nrep, 0)
 			for(rr = 1; rr <= nrep; rr++) {
 				regret_draw_hat = RRM_log(XMAT, BETA_hat[.,rr]', 1, 1)
@@ -385,7 +385,7 @@ end
 
 version 9.2
 mata:
-function mixr_beta(string scalar B_s)
+function mixr_beta(string scalar B_s, real colvector panvar)
 {
 
 	/*--------------------------*/
@@ -403,6 +403,7 @@ function mixr_beta(string scalar B_s)
 	external b_all
 	external ASC_beta
 	external ASC
+	external panvar
 
 	np = mixrbeta_np
 	ID_IND = mixrbeta_ID 
@@ -440,10 +441,9 @@ function mixr_beta(string scalar B_s)
 	N_subject = panelstats(subject)[1]
 
 	/* Panel information for ASC */
-	st_view(panvar = ., ., st_global("group_mata")) // panel information for ASC
 	subject_ASC = panelsetup(panvar, 1)
 	npanels = panelstats(subject_ASC)[1]
-			
+
 	if (user == 1) external mixr_USERDRAWS
 	
 	/* Object P */
@@ -460,7 +460,6 @@ function mixr_beta(string scalar B_s)
 			/* Regular (non-scrambled) Halton integration */
 			ERR = invnormal(halton(nrep, krnd, (1+burn+nrep*(n-1)))')
 		}
-		
 		
 		/* Modify parameters to construct the [beta = mu + sigma * draw] structure. */
 		if (kfix > 0) BETA_new = MFIX_beta \ (MRND_beta :+ (SRND_beta*ERR)) 
@@ -492,7 +491,7 @@ function mixr_beta(string scalar B_s)
 			/* Shape of block individual n */
 			n_rows=rows(XMAT) 
 			n_cols=cols(XMAT)
-			
+
 			if (cons_demanded == "YES") {
 				asc = panelsubmatrix(ASC, 1, subject_ASC)
 				ASC_prod = asc*ASC_beta'
@@ -503,7 +502,9 @@ function mixr_beta(string scalar B_s)
 				regret_draw_beta = RRM_log(XMAT, BETA_new[., rr]', 1, 1)
 
 				if (cons_demanded == "YES") {
+				
 					ER_rep_beta[., rr] =rowsum(regret_draw_beta :+ ASC_prod)
+					
 				}
 				else if (cons_demanded == "NO") {
 					ER_rep_beta[ .,rr] =rowsum(regret_draw_beta)

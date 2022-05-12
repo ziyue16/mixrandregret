@@ -9,7 +9,7 @@ program define mixrpred, eclass
 		NREP(integer 50)             ///
 		BURN(integer 15)             ///
 		XB]
-
+		
 		** Pre-checks **
 		if "`e(cmd)'" == "" exit 301
 		
