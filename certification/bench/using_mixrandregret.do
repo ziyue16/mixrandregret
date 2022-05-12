@@ -88,20 +88,20 @@ sort id_cs
 mata:
 /* program a function to calculate observed regret */
 function RRM_log_sim_data(real matrix x_n, 
-						  real rowvector betas)
+                          real rowvector betas)
 {
-  real scalar i, j
-  real matrix regret_n 
+    real scalar i, j
+    real matrix regret_n 
   
-  regret_n = J(rows(x_n), cols(x_n), 0)
-  for(i=1; i <= rows(x_n); ++i) { 
-	for(j=1; j <= rows(x_n); ++j) { 
-		if (i!=j) { 
-			r_i = ln(1 :+ exp( betas :* ( x_n[j , . ] :-  x_n[i, . ]))) 				
-			regret_n[i, . ] = regret_n[i, . ] :+ r_i 		
-			} 
-		}	  
-	}
+    regret_n = J(rows(x_n), cols(x_n), 0)
+    for(i=1; i <= rows(x_n); ++i) { 
+	    for(j=1; j <= rows(x_n); ++j) { 
+		    if (i!=j) { 
+			    r_i = ln(1 :+ exp( betas :* ( x_n[j , . ] :-  x_n[i, . ])))
+			    regret_n[i, . ] = regret_n[i, . ] :+ r_i
+		    } 
+	    }  
+    }
 return(regret_n)
 }
 		
@@ -110,7 +110,7 @@ st_view(X = ., ., "x1 x2")
 
 // Generates a view id choice situations
 st_view(panvar_choice_sets = ., ., "id_cs")
-		
+
 // set up panel information where each panel unit refers to a choice set 
 task_n = panelsetup(panvar_choice_sets, 1)
 
@@ -128,20 +128,19 @@ for(t=1; t<=npanels_choice_sets; t++) {
 	/*Observed (deterministic) Regret*/
 	R_i = rowsum(RRM_log_sim_data(x_n, b_n[1,])) /*take first row of block of parameters*/
 
-    /* Type 1 error */
-	epsilon  = -1*log(-log(runiform(rows(R_i),1,0,1)))
-    /*Random regret */
+	/* Type 1 error */
+	epsilon = -1*log(-log(runiform(rows(R_i),1,0,1)))
+	/*Random regret */
 	RR_i = R_i  :+ epsilon
 
-    EXP_RR_i = exp(-RR_i)
+	EXP_RR_i = exp(-RR_i)
 
+	P_i = EXP_RR_i :/ quadcolsum(EXP_RR_i, 1)
 
-	P_i   = EXP_RR_i :/ quadcolsum(EXP_RR_i, 1)
-
-	choice_i =  (P_i	 :==max(P_i))
+	choice_i = (P_i	 :==max(P_i))
 	// collect all choices of choice situations (t) of individual (n)
-	  if (t==1)  choice = choice_i
-	  else       choice = choice   \ choice_i
+	if (t==1)  choice = choice_i
+	else       choice = choice   \ choice_i
 
 }
 // Creates a new Stata variable called "choice"    
@@ -151,17 +150,22 @@ for(t=1; t<=npanels_choice_sets; t++) {
 
 end
 
-//matrix define m = J(7, 1, 1)
-mixrandregret choice x_fix, nrep(5) group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) iter(1)
-mixrpred p, nrep(10) xb
-mixrbeta x1 x2 x_fix, plot nrep(10) saving(a) replace
+/*==================================*/
+/*====     Testing lines      ======*/
+/*==================================*/
 
-@
+mixrandregret choice x_fix, nrep(5) iter(1) group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) base(2)
+
+mixrpred p, xb
+mixrpred regret
+
+mixrbeta x1 x2 x_fix, plot nrep(10) saving(new_betas) replace
+
 
 /*==================================*/
 /*====  Certification lines   ======*/
 /*==================================*/
-		  
+
 * cluster check
 mixrandregret choice x_fix, cluster(id_cs) group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) basealternative(1) iter(1)
 
@@ -169,7 +173,7 @@ mixrandregret choice x_fix, cluster(id_cs) group(id_cs) id(id_ind) rand(x1 x2) a
 mixrandregret choice x_fix, nrep(1) group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) basealternative(3) iter(1) noconstant
 
 * Variable in alternatives() does not contain basealternative(#) provided 
-mixrandregret choice x_fix, nrep(1) group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) basealternative(4) iter(1)
+mixrandregret choice x_fix, nrep(1) group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) basealternative(5) iter(1)
 
 * In option basealternative(#), # must be numeric.
 mixrandregret choice x_fix, nrep(1) group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) basealternative("a") iter(1)
@@ -198,7 +202,6 @@ gen x_coll = x_fix
 rcof "noisily mixrandregret choice x_fix x_coll, group(id_cs) id(id_ind) rand(x1 x2) alt(alternative)" == 498
 *rcof "noisily mixrandregret choice x_fix x_coll, group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) constr(x_coll = 1)" == 498
 
-
 * independent variables vary within groups
 gen x_fix_f = 1 if id_cs > 10
 replace x_fix_f = 0 if id_cs <= 10
@@ -208,11 +211,3 @@ rcof "noisily mixrandregret choice x_fix_f, group(id_cs) id(id_ind) rand(x1 x2) 
 * dependent variable only takes values 0-1
 gen choice_f = 2
 rcof "noisily mixrandregret choice_f x_fix, group(id_cs) id(id_ind) rand(x1 x2) alt(alternative)" == 450
-
-* get different results using ln() option, should work
-mixrandregret choice x_fix, group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) ln(1) iter(1)
-mixrandregret choice x_fix, group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) iter(1)
-
-gen ln_x2 = ln(x2)
-mixrandregret choice x_fix, group(id_cs) id(id_ind) rand(x1 ln_x2) alt(alternative) iter(1)
-
