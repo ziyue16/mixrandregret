@@ -65,10 +65,10 @@ program Estimate, eclass sortpreserve
 	global cluster_mata = "`cluster'"
 	global rnd_mata = "`rand'"
 
-	capture mata: mata drop RRM_log() mixRRM_gf0()
+	capture mata: mata drop RRM_log() mixRRM_gf0() pbb_pred() mixr_beta()
 	/* include mata functions from randregret.mata */
 	findfile "mixRRM_gf0.mata"
-	do "`r(fn)'"
+	quietly do "`r(fn)'"
 	
 	/*=======================================================================*/
 	/*===================       CHECK BASICS        =========================*/
