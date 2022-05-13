@@ -1,0 +1,221 @@
+{smcl}
+{com}{sf}{ul off}{txt}{.-}
+      name:  {res}<unnamed>
+       {txt}log:  {res}D:\mixrandregret\certification\empirical test\empirical test_nrep200.smcl
+  {txt}log type:  {res}smcl
+ {txt}opened on:  {res}12 May 2022, 22:11:38
+
+{com}. do "D:\mixrandregret\certification\empirical test\empirical.do"
+{txt}
+{com}. *! 1.1.0 10May 2022
+. * Author: Ziyue ZHU (ziyue.zhu@student.kuleuven.be) 
+. 
+. clear all
+{res}{txt}
+{com}. global route = "D:\mixrandregret\src"
+{txt}
+{com}. cd "$route"
+{res}D:\mixrandregret\src
+{txt}
+{com}. findfile mixrandregret.ado
+{txt}./mixrandregret.ado
+
+{com}. 
+. * use the data file from: Oluoch-Aridi J, Adam MB, Wafula F, et al. Understanding what women  want: eliciting preference for delivery health facility in a rural subcounty in Kenya, a discrete choice experiment. BMJ Open 2020;10:e038865. doi:10.1136/bmjopen-2020-038865
+. 
+. import excel "D:\mixrandregret\certification\empirical test\data\BMJOPEN_Datafor_DRYAD.xlsx", sheet("Naivasha database") firstrow clear
+{res}{text}(118 vars, 22,368 obs)
+
+{com}. 
+. * clean the dataset
+. drop AM-DN
+{txt}
+{com}. 
+. * fixed variable: cost
+. * random variable: The five variables that described the attributes of place of delivery
+. ** QualityClinicalcare 
+. ** attitudeofhealthworkers
+. ** Medicalequipmentandsupplies
+. ** distance
+. ** referral services
+. 
+. timer clear 
+{txt}
+{com}. * mixed random regret *
+. timer on 1
+{txt}
+{com}. mixrandregret choice cost, nrep(200) group(ncs) id(respondent_id) rand(badqualityclinicalservices distancetofacilitylong attitudeunkindnotsupportive medicalequipmentdrugsnotavail referralservicesnotavailable) alt(alt) base(3) tech(bfgs)
+{txt}./mixRRM_gf0.mata
+{res}
+{txt}initial:{col 16}log likelihood = {res:-8191.2532}
+alternative:{col 16}log likelihood = {res:-13582.728}
+rescale:{col 16}log likelihood = {res:-8191.2532}
+rescale eq:{col 16}log likelihood = {res:-8191.2532}
+{res}{txt}Iteration 0:{space 3}log likelihood = {res:-8191.2532}  
+Iteration 1:{space 3}log likelihood = {res:-7510.6254}  (backed up)
+Iteration 2:{space 3}log likelihood = {res:-6924.0354}  (backed up)
+Iteration 3:{space 3}log likelihood = {res:-6586.4275}  (backed up)
+Iteration 4:{space 3}log likelihood = {res: -6574.446}  (backed up)
+Iteration 5:{space 3}log likelihood = {res:-6570.5749}  (backed up)
+Iteration 6:{space 3}log likelihood = {res:-6564.1354}  (backed up)
+Iteration 7:{space 3}log likelihood = {res:-6544.1526}  (backed up)
+Iteration 8:{space 3}log likelihood = {res:-6532.9154}  (backed up)
+Iteration 9:{space 3}log likelihood = {res:-6357.8969}  (backed up)
+Iteration 10:{space 2}log likelihood = {res:-6356.1782}  (backed up)
+Iteration 11:{space 2}log likelihood = {res:-6351.6268}  (backed up)
+Iteration 12:{space 2}log likelihood = {res:-6348.1886}  (backed up)
+Iteration 13:{space 2}log likelihood = {res: -6020.734}  
+Iteration 14:{space 2}log likelihood = {res:-5960.3479}  (backed up)
+Iteration 15:{space 2}log likelihood = {res:-5756.1918}  
+Iteration 16:{space 2}log likelihood = {res:-5669.9018}  
+Iteration 17:{space 2}log likelihood = {res:-5544.5681}  
+Iteration 18:{space 2}log likelihood = {res:-5399.3565}  
+Iteration 19:{space 2}log likelihood = {res:-5353.4586}  
+Iteration 20:{space 2}log likelihood = {res:-5273.8373}  
+Iteration 21:{space 2}log likelihood = {res:-5195.5314}  
+Iteration 22:{space 2}log likelihood = {res:-5154.1734}  
+Iteration 23:{space 2}log likelihood = {res:-5141.6315}  
+Iteration 24:{space 2}log likelihood = {res:-5135.3393}  
+Iteration 25:{space 2}log likelihood = {res:-5133.0496}  
+Iteration 26:{space 2}log likelihood = {res:-5132.1604}  
+Iteration 27:{space 2}log likelihood = {res:-5131.8623}  
+Iteration 28:{space 2}log likelihood = {res:-5131.7123}  
+Iteration 29:{space 2}log likelihood = {res:-5131.6926}  
+Iteration 30:{space 2}log likelihood = {res:-5131.6867}  
+Iteration 31:{space 2}log likelihood = {res: -5131.685}  
+Iteration 32:{space 2}log likelihood = {res:-5131.6845}  
+Iteration 33:{space 2}log likelihood = {res: -5131.684}  
+Iteration 34:{space 2}log likelihood = {res:-5131.6839}  
+Iteration 35:{space 2}log likelihood = {res:-5131.6839}  
+{res}
+{txt}Case ID variable: ncs{col 48}Number of cases{col 67}= {res}      7456
+{txt}Alternative variable: alt{col 48}
+Random variable(s): badqualityclinicalserv~a{col 48}
+
+
+Mixed random regret model{col 49}Number of obs{col 67}= {res}    22,368
+{txt}{col 49}Wald chi2({res}6{txt}){col 67}= {res}   2348.33
+{txt}Log likelihood = {res}-5131.6839{txt}{col 49}Prob > chi2{col 67}= {res}    0.0000
+
+{txt}{hline 30}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}                       choice{col 31}{c |}      Coef.{col 43}   Std. Err.{col 55}      z{col 63}   P>|z|{col 71}     [95% Con{col 84}f. Interval]
+{hline 30}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}Mean                          {txt}{c |}
+{space 25}cost {c |}{col 31}{res}{space 2} .0003643{col 43}{space 2} 7.77e-06{col 54}{space 1}   46.88{col 63}{space 3}0.000{col 71}{space 4}  .000349{col 84}{space 3} .0003795
+{txt}{space 3}badqualityclinicalservices {c |}{col 31}{res}{space 2}-.6555746{col 43}{space 2} .0562183{col 54}{space 1}  -11.66{col 63}{space 3}0.000{col 71}{space 4}-.7657605{col 84}{space 3}-.5453886
+{txt}{space 7}distancetofacilitylong {c |}{col 31}{res}{space 2}-.2326461{col 43}{space 2} .0359607{col 54}{space 1}   -6.47{col 63}{space 3}0.000{col 71}{space 4}-.3031277{col 84}{space 3}-.1621645
+{txt}{space 2}attitudeunkindnotsupportive {c |}{col 31}{res}{space 2}-1.030494{col 43}{space 2} .0607602{col 54}{space 1}  -16.96{col 63}{space 3}0.000{col 71}{space 4}-1.149582{col 84}{space 3}-.9114065
+{txt}medicalequipmentdrugsnotavail {c |}{col 31}{res}{space 2}-1.113014{col 43}{space 2} .0456907{col 54}{space 1}  -24.36{col 63}{space 3}0.000{col 71}{space 4}-1.202566{col 84}{space 3}-1.023462
+{txt}{space 1}referralservicesnotavailable {c |}{col 31}{res}{space 2}-.0216419{col 43}{space 2} .0412673{col 54}{space 1}   -0.52{col 63}{space 3}0.600{col 71}{space 4}-.1025243{col 84}{space 3} .0592404
+{txt}{hline 30}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}SD                            {txt}{c |}
+{space 3}badqualityclinicalservices {c |}{col 31}{res}{space 2} -1.14292{col 43}{space 2}  .054999{col 54}{space 1}  -20.78{col 63}{space 3}0.000{col 71}{space 4}-1.250716{col 84}{space 3}-1.035124
+{txt}{space 7}distancetofacilitylong {c |}{col 31}{res}{space 2} -.508505{col 43}{space 2} .0442474{col 54}{space 1}  -11.49{col 63}{space 3}0.000{col 71}{space 4}-.5952284{col 84}{space 3}-.4217817
+{txt}{space 2}attitudeunkindnotsupportive {c |}{col 31}{res}{space 2}-1.166519{col 43}{space 2} .0560558{col 54}{space 1}  -20.81{col 63}{space 3}0.000{col 71}{space 4}-1.276387{col 84}{space 3}-1.056652
+{txt}medicalequipmentdrugsnotavail {c |}{col 31}{res}{space 2} .7580936{col 43}{space 2}  .046069{col 54}{space 1}   16.46{col 63}{space 3}0.000{col 71}{space 4} .6677999{col 84}{space 3} .8483872
+{txt}{space 1}referralservicesnotavailable {c |}{col 31}{res}{space 2} .6305895{col 43}{space 2} .0471249{col 54}{space 1}   13.38{col 63}{space 3}0.000{col 71}{space 4} .5382265{col 84}{space 3} .7229525
+{txt}{hline 30}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}ASC                           {txt}{c |}
+{space 24}ASC_1 {c |}{col 31}{res}{space 2}-.0060794{col 43}{space 2} .0079767{col 54}{space 1}   -0.76{col 63}{space 3}0.446{col 71}{space 4}-.0217134{col 84}{space 3} .0095545
+{txt}{space 24}ASC_2 {c |}{col 31}{res}{space 2} .0038051{col 43}{space 2} .0079622{col 54}{space 1}    0.48{col 63}{space 3}0.633{col 71}{space 4}-.0118004{col 84}{space 3} .0194107
+{txt}{hline 30}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+
+The sign of the estimated standard deviations is irrelevant: interpret them as
+being positive
+
+Note: we don't estimate random regret model to get inital values in mixed version.{col 48}
+Users are advised to estimate on their own to make comparsion{col 48}
+
+{com}. 
+. timer off 1
+{txt}
+{com}. 
+. mixrpred pregret, xb
+{res}{txt}
+{com}. mixrpred p_r, proba
+{res}{txt}
+{com}. 
+. mixrbeta badqualityclinicalservices distancetofacilitylong attitudeunkindnotsupportive medicalequipmentdrugsnotavail referralservicesnotavailable, plot saving(betas_r) replace
+{res}{txt}(note: file betas_r.dta not found)
+file betas_r.dta saved
+{res}{txt}(note: file badqualityclinicalservices.gph not found)
+{res}{txt}(file badqualityclinicalservices.gph saved)
+{res}{txt}(note: file distancetofacilitylong.gph not found)
+{res}{txt}(file distancetofacilitylong.gph saved)
+{res}{txt}(note: file attitudeunkindnotsupportive.gph not found)
+{res}{txt}(file attitudeunkindnotsupportive.gph saved)
+{res}{txt}(note: file medicalequipmentdrugsnotavail.gph not found)
+{res}{txt}(file medicalequipmentdrugsnotavail.gph saved)
+{res}{txt}(note: file referralservicesnotavailable.gph not found)
+{res}{txt}(file referralservicesnotavailable.gph saved)
+
+{com}. 
+. * mixed logit *
+. timer on 2
+{txt}
+{com}. 
+. mixlogit choice cost, nrep(200) group(ncs) id(respondent_id) rand( badqualityclinicalservices distancetofacilitylong attitudeunkindnotsupportive medicalequipmentdrugsnotavail referralservicesnotavailable)
+{res}
+{txt}Iteration 0:{col 16}log likelihood = {res}-6337.8413{txt}  (not concave)
+{res}{txt}Iteration 1:{col 16}log likelihood = {res}-5630.1532{txt}  
+{res}{txt}Iteration 2:{col 16}log likelihood = {res}-5536.9463{txt}  (not concave)
+{res}{txt}Iteration 3:{col 16}log likelihood = {res}-5484.1157{txt}  
+{res}{txt}Iteration 4:{col 16}log likelihood = {res}-5452.9838{txt}  
+{res}{txt}Iteration 5:{col 16}log likelihood = {res}-5451.6406{txt}  
+{res}{txt}Iteration 6:{col 16}log likelihood = {res}-5451.6386{txt}  
+{res}{txt}Iteration 7:{col 16}log likelihood = {res}-5451.6386{txt}  
+
+Mixed logit model{col 49}Number of obs{col 67}= {res}    22,368
+{txt}{col 49}LR chi2({res}5{txt}){col 67}= {res}   1848.69
+{txt}Log likelihood = {res}-5451.6386{txt}{col 49}Prob > chi2{col 67}= {res}    0.0000
+
+{txt}{hline 30}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}                       choice{col 31}{c |}      Coef.{col 43}   Std. Err.{col 55}      z{col 63}   P>|z|{col 71}     [95% Con{col 84}f. Interval]
+{hline 30}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}Mean                          {txt}{c |}
+{space 25}cost {c |}{col 31}{res}{space 2} .0004443{col 43}{space 2} 9.56e-06{col 54}{space 1}   46.49{col 63}{space 3}0.000{col 71}{space 4} .0004256{col 84}{space 3} .0004631
+{txt}{space 3}badqualityclinicalservices {c |}{col 31}{res}{space 2} -.864094{col 43}{space 2} .0878267{col 54}{space 1}   -9.84{col 63}{space 3}0.000{col 71}{space 4}-1.036231{col 84}{space 3}-.6919568
+{txt}{space 7}distancetofacilitylong {c |}{col 31}{res}{space 2}-.1443956{col 43}{space 2} .0503976{col 54}{space 1}   -2.87{col 63}{space 3}0.004{col 71}{space 4} -.243173{col 84}{space 3}-.0456183
+{txt}{space 2}attitudeunkindnotsupportive {c |}{col 31}{res}{space 2}-1.339178{col 43}{space 2} .0898423{col 54}{space 1}  -14.91{col 63}{space 3}0.000{col 71}{space 4}-1.515266{col 84}{space 3} -1.16309
+{txt}medicalequipmentdrugsnotavail {c |}{col 31}{res}{space 2}-1.641978{col 43}{space 2} .0747992{col 54}{space 1}  -21.95{col 63}{space 3}0.000{col 71}{space 4}-1.788582{col 84}{space 3}-1.495374
+{txt}{space 1}referralservicesnotavailable {c |}{col 31}{res}{space 2} .1134873{col 43}{space 2} .0552595{col 54}{space 1}    2.05{col 63}{space 3}0.040{col 71}{space 4} .0051807{col 84}{space 3} .2217939
+{txt}{hline 30}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}SD                            {txt}{c |}
+{space 3}badqualityclinicalservices {c |}{col 31}{res}{space 2} 1.758205{col 43}{space 2} .0939851{col 54}{space 1}   18.71{col 63}{space 3}0.000{col 71}{space 4} 1.573998{col 84}{space 3} 1.942412
+{txt}{space 7}distancetofacilitylong {c |}{col 31}{res}{space 2}-.6860459{col 43}{space 2}  .062582{col 54}{space 1}  -10.96{col 63}{space 3}0.000{col 71}{space 4}-.8087044{col 84}{space 3}-.5633874
+{txt}{space 2}attitudeunkindnotsupportive {c |}{col 31}{res}{space 2} 1.809775{col 43}{space 2} .0878823{col 54}{space 1}   20.59{col 63}{space 3}0.000{col 71}{space 4} 1.637529{col 84}{space 3} 1.982021
+{txt}medicalequipmentdrugsnotavail {c |}{col 31}{res}{space 2} 1.185403{col 43}{space 2} .0735021{col 54}{space 1}   16.13{col 63}{space 3}0.000{col 71}{space 4} 1.041342{col 84}{space 3} 1.329465
+{txt}{space 1}referralservicesnotavailable {c |}{col 31}{res}{space 2} .7812024{col 43}{space 2} .0663282{col 54}{space 1}   11.78{col 63}{space 3}0.000{col 71}{space 4} .6512014{col 84}{space 3} .9112033
+{txt}{hline 30}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+The sign of the estimated standard deviations is irrelevant: interpret them as
+being positive
+
+{com}. 
+. timer off 2
+{txt}
+{com}. timer list
+{res}   1:  31843.04 /        1 =   31843.0450
+   2:    202.61 /        1 =     202.6090
+{txt}
+{com}. 
+. mixlpred p_l
+{res}{txt}
+{com}. mixlbeta badqualityclinicalservices distancetofacilitylong attitudeunkindnotsupportive medicalequipmentdrugsnotavail referralservicesnotavailable, saving(betas_l) replace
+{res}{txt}file betas_l.dta saved
+
+{com}. 
+. save predicted_data.dta, replace
+{txt}(note: file predicted_data.dta not found)
+file predicted_data.dta saved
+
+{com}. 
+{txt}end of do-file
+
+{com}. log close
+      {txt}name:  {res}<unnamed>
+       {txt}log:  {res}D:\mixrandregret\certification\empirical test\empirical test_nrep200.smcl
+  {txt}log type:  {res}smcl
+ {txt}closed on:  {res}13 May 2022, 11:41:54
+{txt}{.-}
+{smcl}
+{txt}{sf}{ul off}
