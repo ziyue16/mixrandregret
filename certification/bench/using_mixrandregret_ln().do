@@ -80,7 +80,7 @@ sort id_cs
 mata:
 /* program a function to calculate observed regret */
 function RRM_log_sim_data(real matrix x_n, 
-						  real rowvector betas)
+                          real rowvector betas)
 {
   real scalar i, j
   real matrix regret_n 
@@ -89,20 +89,20 @@ function RRM_log_sim_data(real matrix x_n,
   for(i=1; i <= rows(x_n); ++i) { 
 	for(j=1; j <= rows(x_n); ++j) { 
 		if (i!=j) { 
-			r_i = ln(1 :+ exp( betas :* ( x_n[j , . ] :-  x_n[i, . ]))) 				
-			regret_n[i, . ] = regret_n[i, . ] :+ r_i 		
+			r_i = ln(1 :+ exp( betas :* ( x_n[j , . ] :-  x_n[i, . ])))
+			regret_n[i, . ] = regret_n[i, . ] :+ r_i
 			} 
 		}	  
 	}
 return(regret_n)
 }
-		
+
 // generates a view of all attributes (M) x
 st_view(X = ., ., "x1 x2")
 
 // generates a view id choice situations
 st_view(panvar_choice_sets = ., ., "id_cs")
-		
+
 // set up panel information where each panel unit refers to a choice set 
 task_n = panelsetup(panvar_choice_sets, 1)
 
@@ -121,14 +121,14 @@ for(t=1; t<=npanels_choice_sets; t++) {
 	epsilon = -1*log(-log(runiform(rows(R_i),1,0,1))) // Type 1 error
 	
 	RR_i = R_i :+ epsilon // random regret
-    EXP_RR_i = exp(-RR_i)
+	EXP_RR_i = exp(-RR_i)
 
 	P_i = EXP_RR_i :/ quadcolsum(EXP_RR_i, 1)
 
 	choice_i =  (P_i :== max(P_i))
 	// collect all choices of choice situations (t) of individual (n)
-	  if (t==1)  choice = choice_i
-	  else       choice = choice \ choice_i
+	if (t==1)  choice = choice_i
+	else       choice = choice \ choice_i
 
 }
 // Creates a new Stata variable called "choice"    
@@ -139,4 +139,3 @@ end
 
 //matrix define m = J(7, 1, 1)
 mixrandregret choice x_fix, nrep(500) group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) ln(2)
-@

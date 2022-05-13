@@ -1,0 +1,259 @@
+{smcl}
+{com}{sf}{ul off}{txt}{.-}
+      name:  {res}<unnamed>
+       {txt}log:  {res}D:\mixrandregret\certification\empirical test\log-normal.smcl
+  {txt}log type:  {res}smcl
+ {txt}opened on:  {res}13 May 2022, 00:40:18
+
+{com}. do "D:\mixrandregret\src\using_mixrandregret_ln().do"
+{txt}
+{com}. *! 1.1.0 2Apr2022
+. * Author: Ziyue ZHU (ziyue.zhu@student.kuleuven.be) 
+. 
+. /*==================================*/
+. /*=====      Setting up        =====*/
+. /*==================================*/
+. clear all
+{res}{txt}
+{com}. /* You need to adjust this and change it for the folder where you will be developing the command. */
+. global route = "D:\mixrandregret\src"
+{txt}
+{com}. cd "$route"
+{res}D:\mixrandregret\src
+{txt}
+{com}. /* This will search for the adofile of the command. */
+. findfile mixrandregret.ado
+{txt}./mixrandregret.ado
+
+{com}. 
+. 
+. set seed 777
+{txt}
+{com}. local J  3    // number of alternatives
+{txt}
+{com}. local N  2000 // number of Individuals
+{txt}
+{com}. local t  10   // number of choice sets per individual
+{txt}
+{com}. 
+. /*===================================================*/
+. /*====  Define the inputs for mata evaluator    =====*/
+. /*===================================================*/
+. 
+. /* start defining the inputs for the mata evaluator defined latter */
+. local rhs "x1 x2"   // right hand side variables: defined by hand
+{txt}
+{com}. local lhs "choice"  // left hand side variables: defined by hand
+{txt}
+{com}. local group "id_cs" // variable with choice sets
+{txt}
+{com}. local id "id_ind"   // individual ID
+{txt}
+{com}. 
+. local nrep 500      // # of halton draws per random variable
+{txt}
+{com}. local kfix 1        // # of fixed variable (x_fix)
+{txt}
+{com}. local krnd 2        // # of random variables (both 2 variables, x1 x2)
+{txt}
+{com}. local burn 15       // # of burning draws in halton 
+{txt}
+{com}. 
+. /* set total number of observations on the data */
+. set obs  `=`N'*`t'*`J'' //eg. 20 individuals choose from 25 choice sets, and each choice set includes 3 alternatives
+{txt}{p}
+number of observations (_N)  was 0,
+now 60,000
+{p_end}
+
+{com}. 
+. /* id_ind = id for each individual */
+. seq id_ind, b(`=`J'*`t'')
+{txt}
+{com}. 
+. /* id_cs_of_ind_n = id for each choice situation for each individual n */
+. seq id_cs_of_ind_n,  f(1) t(`=`J'') b(`=`J'')
+{txt}
+{com}. 
+. /* id_cs = id choice situations without considering the individual */
+. seq id_cs,  f(1) t(`=`J'*`N'*`t'') b(`=`J'')
+{txt}
+{com}. sort id_cs
+{txt}
+{com}. 
+. /* alternative = size of the choice set from where the individual choose */
+. seq alternative, t(`J')
+{txt}
+{com}. 
+. local s = 10
+{txt}
+{com}. /* two generic attributes (random) */
+. gen x1 =  runiform(-`s',`s')
+{txt}
+{com}. gen x2 =  runiform(-`s',`s')
+{txt}
+{com}. 
+. /* create a fix attribute */
+. gen x_fix = rnormal(0,1)
+{txt}
+{com}. 
+. /* parameters for distribution */
+. local mu_1  = 0.25
+{txt}
+{com}. local mu_2  = 0.25
+{txt}
+{com}. 
+. local sigma_1  = 0.25
+{txt}
+{com}. local sigma_2  = 0.25
+{txt}
+{com}. 
+. mata: b1 = exp(`mu_1' :+ sort(J(`=`J'*`t'', 1, rnormal(`N',1,0,1)),1) :* `sigma_1')
+{res}{txt}
+{com}. mata: b2 = exp(`mu_2' :+ sort(J(`=`J'*`t'', 1, rnormal(`N',1,0,1)),1) :* `sigma_2')
+{res}{txt}
+{com}. 
+. mata: b = b1 , b2
+{res}{txt}
+{com}. 
+. global individuals = "id_ind"
+{txt}
+{com}. global choice_sets = "id_cs"
+{txt}
+{com}. sort id_cs
+{txt}
+{com}. 
+. /*===================================================*/
+. /*=====             DATA Generation             =====*/
+. /* Two (independent) normally distributed parameters */
+. /*===================================================*/
+. 
+. mata:
+{txt}{hline 49} mata (type {cmd:end} to exit) {hline}
+{com}: /* program a function to calculate observed regret */
+: function RRM_log_sim_data(real matrix x_n, 
+>                           real rowvector betas)
+> {c -(}
+>   real scalar i, j
+>   real matrix regret_n 
+>   
+>   regret_n = J(rows(x_n), cols(x_n), 0)
+>   for(i=1; i <= rows(x_n); ++i) {c -(} 
+>         for(j=1; j <= rows(x_n); ++j) {c -(} 
+>                 if (i!=j) {c -(} 
+>                         r_i = ln(1 :+ exp( betas :* ( x_n[j , . ] :-  x_n[i, . ])))
+>                         regret_n[i, . ] = regret_n[i, . ] :+ r_i
+>                         {c )-} 
+>                 {c )-}         
+>         {c )-}
+> return(regret_n)
+> {c )-}
+
+: 
+: // generates a view of all attributes (M) x
+: st_view(X = ., ., "x1 x2")
+{res}
+{com}: 
+: // generates a view id choice situations
+: st_view(panvar_choice_sets = ., ., "id_cs")
+{res}
+{com}: 
+: // set up panel information where each panel unit refers to a choice set 
+: task_n = panelsetup(panvar_choice_sets, 1)
+{res}
+{com}: 
+: // # of choice sets 
+: npanels_choice_sets = panelstats(task_n)[1]
+{res}
+{com}: 
+: for(t=1; t<=npanels_choice_sets; t++) {c -(}
+> 
+>         // read in data rows pertaining to subject n & store in a matrix suffixed _n
+>         x_n = panelsubmatrix(X, t, task_n) 
+>         b_n = panelsubmatrix(b, t, task_n) 
+>         
+>         // observed (deterministic) Regret
+>         R_i = rowsum(RRM_log_sim_data(x_n, b_n[1,])) // take first row of block of parameters
+> 
+>         epsilon = -1*log(-log(runiform(rows(R_i),1,0,1))) // Type 1 error
+>         
+>         RR_i = R_i :+ epsilon // random regret
+>         EXP_RR_i = exp(-RR_i)
+> 
+>         P_i = EXP_RR_i :/ quadcolsum(EXP_RR_i, 1)
+> 
+>         choice_i =  (P_i :== max(P_i))
+>         // collect all choices of choice situations (t) of individual (n)
+>         if (t==1)  choice = choice_i
+>         else       choice = choice \ choice_i
+> 
+> {c )-}
+{res}
+{com}: // Creates a new Stata variable called "choice"    
+:  idx = st_addvar("float", "choice")
+{res}
+{com}: // Save the content of Y on "choice" Stata variable
+:  st_store(., idx, choice)
+{res}
+{com}: end
+{txt}{hline}
+
+{com}. 
+. //matrix define m = J(7, 1, 1)
+. mixrandregret choice x_fix, nrep(500) group(id_cs) id(id_ind) rand(x1 x2) alt(alternative) ln(2)
+{txt}./mixRRM_gf0.mata
+{res}
+{txt}initial:{col 16}log likelihood = {res:-2122.4947}
+alternative:{col 16}log likelihood = {res:-2693.1213}
+rescale:{col 16}log likelihood = {res:-2122.4931}
+rescale eq:{col 16}log likelihood = {res:-2118.8659}
+{res}{txt}Iteration 0:{space 3}log likelihood = {res:-2118.8659}  
+Iteration 1:{space 3}log likelihood = {res:-2073.1247}  (not concave)
+Iteration 2:{space 3}log likelihood = {res:-2071.0388}  
+Iteration 3:{space 3}log likelihood = {res:-2070.4488}  
+Iteration 4:{space 3}log likelihood = {res:-2070.4465}  
+Iteration 5:{space 3}log likelihood = {res:-2070.4465}  
+{res}
+{txt}Case ID variable: id_cs{col 48}Number of cases{col 67}= {res}     20000
+{txt}Alternative variable: alternative{col 48}
+Random variable(s): x1 x2{col 48}
+
+
+Mixed random regret model{col 49}Number of obs{col 67}= {res}    60,000
+{txt}{col 49}Wald chi2({res}3{txt}){col 67}= {res}     97.49
+{txt}Log likelihood = {res}-2070.4465{txt}{col 49}Prob > chi2{col 67}= {res}    0.0000
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}      choice{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      z{col 46}   P>|z|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}Mean         {txt}{c |}
+{space 7}x_fix {c |}{col 14}{res}{space 2}-.0384535{col 26}{space 2} .0195305{col 37}{space 1}   -1.97{col 46}{space 3}0.049{col 54}{space 4}-.0767327{col 67}{space 3}-.0001744
+{txt}{space 10}x1 {c |}{col 14}{res}{space 2} .2384875{col 26}{space 2} .0249108{col 37}{space 1}    9.57{col 46}{space 3}0.000{col 54}{space 4} .1896632{col 67}{space 3} .2873118
+{txt}{space 10}x2 {c |}{col 14}{res}{space 2} .2230905{col 26}{space 2} .0250228{col 37}{space 1}    8.92{col 46}{space 3}0.000{col 54}{space 4} .1740467{col 67}{space 3} .2721343
+{txt}{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}SD           {txt}{c |}
+{space 10}x1 {c |}{col 14}{res}{space 2} .0004217{col 26}{space 2} .0355648{col 37}{space 1}    0.01{col 46}{space 3}0.991{col 54}{space 4} -.069284{col 67}{space 3} .0701274
+{txt}{space 10}x2 {c |}{col 14}{res}{space 2} .0519308{col 26}{space 2} .0125112{col 37}{space 1}    4.15{col 46}{space 3}0.000{col 54}{space 4} .0274093{col 67}{space 3} .0764524
+{txt}{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}ASC          {txt}{c |}
+{space 7}ASC_2 {c |}{col 14}{res}{space 2} .0008487{col 26}{space 2} .0196016{col 37}{space 1}    0.04{col 46}{space 3}0.965{col 54}{space 4}-.0375698{col 67}{space 3} .0392672
+{txt}{space 7}ASC_3 {c |}{col 14}{res}{space 2}-.0017894{col 26}{space 2} .0192054{col 37}{space 1}   -0.09{col 46}{space 3}0.926{col 54}{space 4}-.0394313{col 67}{space 3} .0358526
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+
+The sign of the estimated standard deviations is irrelevant: interpret them as
+being positive
+
+Note: we don't estimate random regret model to get inital values in mixed version.{col 48}
+Users are advised to estimate on their own to make comparsion{col 48}
+
+{com}. 
+{txt}end of do-file
+
+{com}. log close
+      {txt}name:  {res}<unnamed>
+       {txt}log:  {res}D:\mixrandregret\certification\empirical test\log-normal.smcl
+  {txt}log type:  {res}smcl
+ {txt}closed on:  {res}13 May 2022, 15:02:43
+{txt}{.-}
+{smcl}
+{txt}{sf}{ul off}
