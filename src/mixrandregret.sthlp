@@ -126,7 +126,7 @@ makers. This option should be specified only when each individual makes multiple
 {synopt:{opt plot}} plots conditional distribution graphs for individual-level parameters.{p_end}
 {synopt :{opth nrep(#)}} specifies the number of Halton draws used for the simulation. The default is {cmd:nrep(50)}.{p_end}
 {synopt :{opth burn(#)}} specifies the number of initial elements to be dropped when creating the Halton sequences. The default is {cmd:burn(15)}. Specifying this option helps reduce the correlation between the sequences in each dimension.{p_end}
-{synopt :{opt replace}} overwrites {it:filename}.
+{synopt :{opt replace}} overwrites {it:filename}.{p_end}
 {synoptline}
 {p2colreset}{...}
 
