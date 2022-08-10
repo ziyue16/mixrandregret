@@ -147,7 +147,7 @@ program Estimate, eclass sortpreserve
 	}
 	
 	/* We don't estimate random regret model to get inital values in mixed version. ///
-		Users are advised to estimate on their own to make comparsion */
+		Users are advised to estimate on their own to make comparison */
 	
 	** Drop missing data **
 	preserve
@@ -311,14 +311,16 @@ program Estimate, eclass sortpreserve
 	}
 
 	** Not setting up starting values **
-	
+	if "`from'"!=""{
+		local init "init(`from', copy skip)"
+	}
 	
 	/*=======================================================================*/
 	/*===================             ML            =========================*/
 	/*=======================================================================*/
 
 	** Run optimisation routine **
-	ml model gf0 mixRRM_gf0() `max' `ASC_vars', maximize `mlopts'
+	ml model gf0 mixRRM_gf0() `max' `ASC_vars', search(off) `init' maximize `mlopts'
 	
 	** Replace tempvar names of ASC for meaningfull names **
 	tempname b_all // vector of estimates
@@ -399,5 +401,5 @@ program Replay
 	
 	di ""
 	di in gr "Note: we don't estimate random regret model to get inital values in mixed version." _col(48)
-	di in gr "Users are advised to estimate on their own to make comparsion" _col(48)
+	di in gr "Users are advised to estimate on their own to make comparison" _col(48)
 end
