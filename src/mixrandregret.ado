@@ -374,7 +374,8 @@ program Estimate, eclass sortpreserve
 	ereturn repost b=`b_all', rename
 	
 	Header
-	Replay, level(`level' ) `CORR' `from'
+	global g_from "`from'"
+	Replay, level(`level' ) 
 
 end
 
@@ -395,7 +396,7 @@ end
 
 
 program Replay
-	syntax [, Level(integer `c(level)') CORR FROM ]
+	syntax [, Level(integer `c(level)') CORR ]
 	ml display , level(`level')
 	
 	di ""
@@ -404,7 +405,7 @@ program Replay
 		di in gr "being positive"
 	}
 	
-	if ("`from'" == ""){
+	if ("${g_from}" == ""){
 	    di ""
 		di in gr `"Warning: initial values not provided. "' _col(48)
 		di in gr `"We highly advise the users to use starting values from {browse "https://journals.sagepub.com/doi/pdf/10.1177/1536867X211045538":randregret}"' _col(48)
