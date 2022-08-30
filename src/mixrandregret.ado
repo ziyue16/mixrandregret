@@ -41,7 +41,7 @@ program Estimate, eclass sortpreserve
 		COLL                        /// overrides checks for multicollinearity		
 		Level(integer `c(level)')   /// set confidence level; default is level(95)
 		USERdraws                   ///
-		NOLog						/// 
+		noLOg 						/// 
 		TRace                       /// maximize options
 		GRADient                    ///
 		HESSian                     ///
@@ -325,7 +325,7 @@ program Estimate, eclass sortpreserve
 	/*=======================================================================*/
 
 	** Run optimisation routine **
-	ml model gf0 mixRRM_gf0() `max' `ASC_vars', search(off) `init' maximize `mlopts'
+	ml model gf0 mixRRM_gf0() `max' `ASC_vars', search(off) `init' maximize `mlopts' `log'
 	
 	** Replace tempvar names of ASC for meaningfull names **
 	tempname b_all // vector of estimates
