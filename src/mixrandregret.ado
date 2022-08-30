@@ -71,7 +71,7 @@ program Estimate, eclass sortpreserve
 	capture mata: mata drop mixr_beta()
 	
 	/* include mata functions from randregret.mata */
-	findfile "mixRRM_gf0.mata"
+	qui findfile "mixRRM_gf0.mata"
 	quietly do "`r(fn)'"
 	
 	/*=======================================================================*/
