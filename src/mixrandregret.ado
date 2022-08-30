@@ -41,7 +41,7 @@ program Estimate, eclass sortpreserve
 		COLL                        /// overrides checks for multicollinearity		
 		Level(integer `c(level)')   /// set confidence level; default is level(95)
 		USERdraws                   ///
-		noLOg 						/// 
+		NOLog						/// 
 		TRace                       /// maximize options
 		GRADient                    ///
 		HESSian                     ///
