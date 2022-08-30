@@ -374,7 +374,7 @@ program Estimate, eclass sortpreserve
 	ereturn repost b=`b_all', rename
 	
 	Header
-	Replay, level(`level')
+	Replay, level(`level'  `from')
 
 end
 
@@ -395,7 +395,7 @@ end
 
 
 program Replay
-	syntax [, Level(integer `c(level)') CORR]
+	syntax [, Level(integer `c(level)') CORR FROM ]
 	ml display , level(`level')
 	
 	di ""
@@ -407,7 +407,7 @@ program Replay
 	if ("`from'" == ""){
 	    di ""
 		di in gr `"Warning: initial values not provided. "' _col(48)
-		di in gr `"We highly advise the users to use starting values from {browse "https://journals.sagepub.com/doi/pdf/10.1177/1536867X211045538": randregret}"' _col(48)
+		di in gr `"We highly advise the users to use starting values from {browse "https://journals.sagepub.com/doi/pdf/10.1177/1536867X211045538":randregret}"' _col(48)
 		di in gr `"estimates for means of the distributions of the random coefficients."' _col(48)
 		
 	}
