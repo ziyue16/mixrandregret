@@ -374,7 +374,7 @@ program Estimate, eclass sortpreserve
 	ereturn repost b=`b_all', rename
 	
 	Header
-	Replay, level(`level'  `from')
+	Replay, level(`level' ) `CORR' `from'
 
 end
 
