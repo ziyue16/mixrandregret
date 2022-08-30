@@ -404,7 +404,13 @@ program Replay
 		di in gr "being positive"
 	}
 	
-	di ""
-	di in gr "Note: we don't estimate random regret model to get inital values in mixed version." _col(48)
-	di in gr "Users are advised to estimate on their own to make comparison" _col(48)
+	if ("`from'" == ""){
+	    di ""
+		di in gr "Warning: initial values not provided. " _col(48)
+		di in gr "We highly advise the users to use starting values from {browse "https://journals.sagepub.com/doi/pdf/10.1177/1536867X211045538": randregret}" _col(48)
+		di in gr "estimates for means of the distributions of the random coefficients." _col(48)
+		
+	}
+	
+
 end
