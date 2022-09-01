@@ -47,26 +47,27 @@
  
 {phang}
 {opt depvar} equal to 1 identifies the chosen alternatives,
-whereas a 0 indicates the alternatives that were not selected.
-There is only one chosen alternative for each case.
+whereas a 0 indicates the alternatives that were not chosen.
+There can be only one chosen alternative for each case.
 
 {phang}
 {opt fweight}s, {opt iweight}s, and {opt pweight}s are allowed (see {help weight}), 
-but they are applied to decision-makers, not to individual observations.{p_end}
+but they are interpreted to apply to decision-makers, not to individual observations.{p_end}
 
 
 {title:Description}
 
 {pstd}
-{cmd:mixrandregret} estimates the mixed random regret minimization model described in {help mixrandregret##hensher2016:Hensher et al. (2016)}, which is a mixed version of the classic random regret minimization model introduced in {help mixrandregret##chorus2010:Chorus. C. (2010)}. {cmd:mixrandregret} extends the {cmd:randregret} command ({help mixrandregret##gutierrez2021:Gutiérrez-Vargas et al, 2021}) and allows to specify normally and log-normally distributed taste parameters inside the regret function. The command uses simulated maximum likelihood for estimation ({help mixrandregret##train2003:Train. K., 2003}). 
+{cmd:mixrandregret} utilizes the mixed random regret minimization model described in {help mixrandregret##hensher2016:Hensher et al. (2016)}, which is a mixed version of the classic random regret minimization model introduced in {help mixrandregret##chorus2010:Chorus. C. (2010)}. {cmd:mixrandregret} extends the {cmd:randregret} ({help mixrandregret##gutierrez2021:Gutiérrez-Vargas et al, 2021}) and allows to specify normal and log-normally distributed taste parameters inside the regret function. The command uses maximum simulated likelihood for estimation ({help mixrandregret##train2003:Train. K., 2003}). 
 
 {pstd}
-Following {cmd:mixrandregret}, {cmd:mixrpred} can be used to obtain the predicted probabilities or the predicted systematic regret. 
+{cmd:mixrpred} can be used following {cmd:mixrandregret} to obtain the predicted probabilities or the predicted systematic regret. 
 
 {pstd}
-{cmd:mixrbeta} can be used after {cmd:mixrandregret} to calculate
+{cmd:mixrbeta} can be used following {cmd:mixrandregret} to calculate
 individual-level parameters corresponding to the variables in the specified
-{it:varname} using the method proposed by {help mixrandregret##train2003:Train. K. (2003)} in chap. 11.  The individual-level parameters are stored in a user-specified data file.
+{it:varname} using the method proposed by {help mixrandregret##train2003:Train. K. (2003)} chap. 11.  The individual-level parameters are stored in a data
+file specified by the user.
 
 
 {title:Options}
@@ -77,22 +78,23 @@ individual-level parameters corresponding to the variables in the specified
 {synoptline}
 {syntab:Model}
 {p2coldent :* {opth gr:oup(varname)}} is required and specifies a numeric identifier variable ({it:varname}) for the choice occasions.{p_end}
-{p2coldent :* {opth rand:(varlist)}} is required and specifies the independent variables whose coefficients are random. The random coefficients can be specified to be normally or log-normally distributed (see the ln() option). The variables immediately following the dependent variable in the syntax are specified to have fixed coefficients.{p_end}
+{p2coldent :* {opth rand:(varlist)}} is required and specifies the independent variables whose coefficients are random. The random coefficients can be specified to be normally or lognormally distributed (see the ln() option). The variables immediately following the dependent variable in the syntax are specified to have fixed coefficients.{p_end}
 {p2coldent :* {opth alt:ernatives(varname)}} use {it:varname} to identify the
         alternatives available for each case.{p_end}
-{synopt:{opth base:alternative(#)}} sets base Alternative Specific Constants (ASC) if ASC is not suppressed.{p_end}
-{synopt:{opt nocons:ant}} suppress the ASC.{p_end}
+{synopt:{opth base:alternative(#)}} sets base Alternative Specific Constants (ASC).{p_end}
+{synopt:{opt nocons:ant}} suppress the alternative specific constants.{p_end}
 {synopt:{opth id(varname)}} specifies a numeric identifier variable for the decision
-makers. This option should be specified only when each individual makes multiple selections.{p_end}
+makers. This option should be specified only when each individual performs
+several choices; i.e., the dataset is a panel.{p_end}
 {synopt :{opt r:obust}, {opt cl:uster}} see {help estimation options}. The cluster variable must be numeric.{p_end}
-{synopt:{opth ln(#)}} specifies that the last {it:#} variables in {opt rand()} have log-normally rather than normally distributed coefficients. The default is {cmd:ln(0)}.{p_end}
+{synopt:{opth ln(#)}} specifies that the last {it:#} variables in {opt rand()} have lognormally rather than normally distributed coefficients. The default is {cmd:ln(0)}.{p_end}
 
 {syntab:Simulation}
 {synopt :{opth nrep(#)}} specifies the number of Halton draws used for the simulation. The default is {cmd:nrep(50)}.{p_end}
-{synopt :{opth burn(#)}} specifies the number of initial elements to be dropped when creating the Halton sequences. The default is {cmd:burn(15)}. Specifying this option helps reduce the correlation between the sequences in each dimension.{p_end}
+{synopt :{opth burn(#)}} specifies the number of initial sequence elements to drop when creating the Halton sequences. The default is {cmd:burn(15)}. Specifying this option helps reduce the correlation between the sequences in each dimension.{p_end}
 
 {syntab:Reporting}
-{synopt :{opth l:evel(#)}} set the confidence level. The default is {cmd:level(95)}.{p_end}
+{synopt :{opth l:evel(#)}} set confidence level; default is {cmd:level(95)}.{p_end}
 
 {syntab:Maximization}
 {synopt:{it:maximize_options}}
@@ -110,10 +112,10 @@ makers. This option should be specified only when each individual makes multiple
 {synopthdr :mixrpred}
 {synoptline}
 {syntab:Model}
-{synopt : {opt proba}} calculate the choice probability; the default option.{p_end}
-{synopt : {opt xb}} calculate the prediction of the systematic regret.{p_end}
+{synopt : {opt proba}} calculate probability of a positive outcome; the default{p_end}
+{synopt : {opt xb}} calculate linear prediction of the systematic regret{p_end}
 {synopt :{opth nrep(#)}} specifies the number of Halton draws used for the simulation. The default is {cmd:nrep(50)}.{p_end}
-{synopt :{opth burn(#)}} specifies the number of initial elements to be dropped when creating the Halton sequences. The default is {cmd:burn(15)}. Specifying this option helps reduce the correlation between the sequences in each dimension.{p_end}
+{synopt :{opth burn(#)}} specifies the number of initial sequence elements to drop when creating the Halton sequences. The default is {cmd:burn(15)}. Specifying this option helps reduce the correlation between the sequences in each dimension.{p_end}
 {synoptline}
 {p2colreset}{...}
 
@@ -123,10 +125,10 @@ makers. This option should be specified only when each individual makes multiple
 {synoptline}
 {syntab:Model}
 {p2coldent :* {opth saving(filename)}} saves individual-level parameters to {it:filename}{p_end}
-{synopt:{opt plot}} plots conditional distribution graphs for individual-level parameters.{p_end}
+{synopt:{opt plot}} save conditional distribution graphs (histogram and Kdensity) for betas.{p_end}
 {synopt :{opth nrep(#)}} specifies the number of Halton draws used for the simulation. The default is {cmd:nrep(50)}.{p_end}
-{synopt :{opth burn(#)}} specifies the number of initial elements to be dropped when creating the Halton sequences. The default is {cmd:burn(15)}. Specifying this option helps reduce the correlation between the sequences in each dimension.{p_end}
-{synopt :{opt replace}} overwrites {it:filename}.{p_end}
+{synopt :{opth burn(#)}} specifies the number of initial sequence elements to drop when creating the Halton sequences. The default is {cmd:burn(15)}. Specifying this option helps reduce the correlation between the sequences in each dimension.{p_end}
+{synopt :{opt replace}} overwrites {it:filename}.
 {synoptline}
 {p2colreset}{...}
 
@@ -168,7 +170,27 @@ Use alternative 1 as base alternative to calculate ASC can be specified as follo
 {phang2}{cmd:. mixrandregret choice x_fix, group(id_cs) id(id_ind) rand(x_rnd) alternatives(alt) ln(1) basealternative(1)}{p_end}
 
 {pstd}
-{cmd:mixrandregret} does't estimate random regret model to get inital values in mixed version. Users are advised to estimate on their own to make comparsion.
+Warning: initial values not provided. We highly advise the users to use starting values from {cmd:randregret} estimates for the means of the distributions of the random coefficients.
+
+{pstd}
+An example of setting starting values (2 parameters from fixed effects, 2 parameters from random effects - mean and SD, and 2 parameters from ASC):
+
+{phang2}{cmd:. mixrandregret choice x_fix, group(id_cs) id(id_ind) rand(x_rnd) alternatives(alt) ln(1) basealternative(1) from(1 1 1 1 1 1)}{p_end}
+
+{pstd}
+Predict choice probabilities and save values in a variable named {cmd:p}:
+
+{phang2}{cmd:. mixrpred p, proba}{p_end}
+
+{pstd}
+Linear prediction of the systematic regret and save values in a variable named {cmd:regret}:
+
+{phang2}{cmd:. mixrpred regret, xb}{p_end}
+
+{pstd}
+Obtain the individual-level parameters, generate the plot, and save in the file named {cmd:ind_rnd}:
+
+{phang2}{cmd:. mixrbeta x_rnd, plot saving(ind_rnd) replace}{p_end}
 
 
 {marker author}{...}
