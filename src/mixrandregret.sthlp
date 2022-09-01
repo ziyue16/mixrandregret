@@ -76,7 +76,6 @@ file specified by the user.
 {synoptset 23 tabbed}{...}
 {synopthdr :mixrandregret}
 {synoptline}
-{syntab:Model}
 {p2coldent :* {opth gr:oup(varname)}} is required and specifies a numeric identifier variable ({it:varname}) for the choice occasions.{p_end}
 {p2coldent :* {opth rand:(varlist)}} is required and specifies the independent variables whose coefficients are random. The random coefficients can be specified to be normally or lognormally distributed (see the ln() option). The variables immediately following the dependent variable in the syntax are specified to have fixed coefficients.{p_end}
 {p2coldent :* {opth alt:ernatives(varname)}} use {it:varname} to identify the
@@ -111,7 +110,6 @@ several choices; i.e., the dataset is a panel.{p_end}
 {synoptset 23 tabbed}{...}
 {synopthdr :mixrpred}
 {synoptline}
-{syntab:Model}
 {synopt : {opt proba}} calculate probability of a positive outcome; the default{p_end}
 {synopt : {opt xb}} calculate linear prediction of the systematic regret{p_end}
 {synopt :{opth nrep(#)}} specifies the number of Halton draws used for the simulation. The default is {cmd:nrep(50)}.{p_end}
@@ -123,7 +121,6 @@ several choices; i.e., the dataset is a panel.{p_end}
 {synoptset 23 tabbed}{...}
 {synopthdr :mixrbeta}
 {synoptline}
-{syntab:Model}
 {p2coldent :* {opth saving(filename)}} saves individual-level parameters to {it:filename}{p_end}
 {synopt:{opt plot}} save conditional distribution graphs (histogram and Kdensity) for betas.{p_end}
 {synopt :{opth nrep(#)}} specifies the number of Halton draws used for the simulation. The default is {cmd:nrep(50)}.{p_end}
@@ -133,6 +130,7 @@ several choices; i.e., the dataset is a panel.{p_end}
 {p2colreset}{...}
 
 
+{marker examples}{...}
 {title:Examples}
 
 {pstd}
@@ -218,6 +216,7 @@ Leuven, Belgium{break}
 martina.vandebroek@kuleuven.be>
 
 
+{marker references}{...}
 {title:References}
 
 {marker hensher2016}{...}
