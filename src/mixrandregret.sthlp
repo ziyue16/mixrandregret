@@ -90,8 +90,9 @@ several choices; i.e., the dataset is a panel.{p_end}
 {synopt:{opth ln(#)}} specifies that the last {it:#} variables in {opt rand()} have lognormally rather than normally distributed coefficients. The default is {cmd:ln(0)}.{p_end}
 
 {syntab:Simulation}
-{synopt :{opth burn(#)}} specifies the number of initial sequence elements to drop when creating the Halton sequences. The default is {cmd:burn(15)}. Specifying this option helps reduce the correlation between the sequences in each dimension.{p_end}
 {synopt :{opth nrep(#)}} specifies the number of Halton draws used for the simulation. The default is {cmd:nrep(50)}.{p_end}
+{synopt :{opth burn(#)}} specifies the number of initial sequence elements to drop when creating the Halton sequences. The default is {cmd:burn(15)}. 
+Specifying this option helps reduce the correlation between the sequences in each dimension.{p_end}
 
 {syntab:Reporting}
 {synopt :{opth l:evel(#)}} set confidence level; default is {cmd:level(95)}.{p_end}
@@ -114,8 +115,9 @@ several choices; i.e., the dataset is a panel.{p_end}
 {synoptline}
 {synopt : {opt proba}} calculate probability of a positive outcome; the default{p_end}
 {synopt : {opt xb}} calculate linear prediction of the systematic regret{p_end}
-{synopt :{opth burn(#)}} specifies the number of initial sequence elements to drop when creating the Halton sequences. The default is {cmd:burn(15)}. Specifying this option helps reduce the correlation between the sequences in each dimension.{p_end}
 {synopt :{opth nrep(#)}} specifies the number of Halton draws used for the simulation. The default is {cmd:nrep(50)}.{p_end}
+{synopt :{opth burn(#)}} specifies the number of initial sequence elements to drop when creating the Halton sequences. The default is {cmd:burn(15)}.
+ Specifying this option helps reduce the correlation between the sequences in each dimension.{p_end}
 {synoptline}
 {p2colreset}{...}
 
@@ -126,8 +128,9 @@ several choices; i.e., the dataset is a panel.{p_end}
 {synoptline}
 {p2coldent :* {opth saving(filename)}} saves individual-level parameters to {it:filename}.{p_end}
 {synopt:{opt plot}} save conditional distribution graphs (histogram and Kdensity) for betas.{p_end}
-{synopt :{opth burn(#)}} specifies the number of initial sequence elements to drop when creating the Halton sequences. The default is {cmd:burn(15)}. Specifying this option helps reduce the correlation between the sequences in each dimension.{p_end}
 {synopt :{opth nrep(#)}} specifies the number of Halton draws used for the simulation. The default is {cmd:nrep(50)}.{p_end}
+{synopt :{opth burn(#)}} specifies the number of initial sequence elements to drop when creating the Halton sequences. The default is {cmd:burn(15)}.
+ Specifying this option helps reduce the correlation between the sequences in each dimension.{p_end}
 {synopt :{opt replace}} overwrites {it:filename}.{p_end}
 {synoptline}
 {p2colreset}{...}
