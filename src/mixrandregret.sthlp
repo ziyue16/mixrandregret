@@ -76,6 +76,7 @@ file specified by the user.
 {synoptset 23 tabbed}{...}
 {synopthdr :mixrandregret}
 {synoptline}
+{syntab:Model}
 {p2coldent :* {opth gr:oup(varname)}} is required and specifies a numeric identifier variable ({it:varname}) for the choice occasions.{p_end}
 {p2coldent :* {opth rand:(varlist)}} is required and specifies the independent variables whose coefficients are random. The random coefficients can be specified to be normally or lognormally distributed (see the ln() option). The variables immediately following the dependent variable in the syntax are specified to have fixed coefficients.{p_end}
 {p2coldent :* {opth alt:ernatives(varname)}} use {it:varname} to identify the
@@ -106,6 +107,7 @@ several choices; i.e., the dataset is a panel.{p_end}
 {synoptline}
 {p2colreset}{...}
 
+
 {marker geneoptions}{...}
 {synoptset 23 tabbed}{...}
 {synopthdr :mixrpred}
@@ -117,11 +119,12 @@ several choices; i.e., the dataset is a panel.{p_end}
 {synoptline}
 {p2colreset}{...}
 
+
 {marker muoptions}{...}
 {synoptset 23 tabbed}{...}
 {synopthdr :mixrbeta}
 {synoptline}
-{p2coldent :* {opth saving(filename)}} saves individual-level parameters to {it:filename}{p_end}
+{p2coldent :* {opth saving(filename)}} saves individual-level parameters to {it:filename}.{p_end}
 {synopt:{opt plot}} save conditional distribution graphs (histogram and Kdensity) for betas.{p_end}
 {synopt :{opth nrep(#)}} specifies the number of Halton draws used for the simulation. The default is {cmd:nrep(50)}.{p_end}
 {synopt :{opth burn(#)}} specifies the number of initial sequence elements to drop when creating the Halton sequences. The default is {cmd:burn(15)}. Specifying this option helps reduce the correlation between the sequences in each dimension.{p_end}
