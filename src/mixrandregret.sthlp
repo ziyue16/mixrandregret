@@ -72,7 +72,7 @@ file specified by the user.
 
 {title:Options}
 
-{marker classicoptions}{...}
+{marker mixoptions}{...}
 {synoptset 23 tabbed}{...}
 {synopthdr :mixrandregret}
 {synoptline}
@@ -108,27 +108,27 @@ several choices; i.e., the dataset is a panel.{p_end}
 {p2colreset}{...}
 
 
-{marker geneoptions}{...}
+{marker predoptions}{...}
 {synoptset 23 tabbed}{...}
 {synopthdr :mixrpred}
 {synoptline}
 {synopt : {opt proba}} calculate probability of a positive outcome; the default{p_end}
 {synopt : {opt xb}} calculate linear prediction of the systematic regret{p_end}
 {synopt :{opth nrep(#)}} specifies the number of Halton draws used for the simulation. The default is {cmd:nrep(50)}.{p_end}
-{synopt :{opth burn(#)}} specifies the number of initial sequence elements to drop when creating the Halton sequences. The default is {cmd:burn(15)}. Specifying this option helps reduce the correlation between the sequences in each dimension. {p_end}
+{synopt :{opth burn(#)}} specifies the number of initial sequence elements to drop when creating the Halton sequences. The default is {cmd:burn(15)}. Specifying this option helps reduce the correlation between the sequences in each dimension.{p_end}
 {synoptline}
 {p2colreset}{...}
 
 
-{marker muoptions}{...}
+{marker betaoptions}{...}
 {synoptset 23 tabbed}{...}
 {synopthdr :mixrbeta}
 {synoptline}
 {p2coldent :* {opth saving(filename)}} saves individual-level parameters to {it:filename}.{p_end}
 {synopt:{opt plot}} save conditional distribution graphs (histogram and Kdensity) for betas.{p_end}
 {synopt :{opth nrep(#)}} specifies the number of Halton draws used for the simulation. The default is {cmd:nrep(50)}.{p_end}
-{synopt :{opth burn(#)}} specifies the number of initial sequence elements to drop when creating the Halton sequences. The default is {cmd:burn(15)}. Specifying this option helps reduce the correlation between the sequences in each dimension. {p_end}
-{synopt :{opt replace}} overwrites {it:filename}. {p_end}
+{synopt :{opth burn(#)}} specifies the number of initial sequence elements to drop when creating the Halton sequences. The default is {cmd:burn(15)}. Specifying this option helps reduce the correlation between the sequences in each dimension.{p_end}
+{synopt :{opt replace}} overwrites {it:filename}.{p_end}
 {synoptline}
 {p2colreset}{...}
 
