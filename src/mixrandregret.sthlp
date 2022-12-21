@@ -11,12 +11,12 @@
 {cmd:mixrandregret}
 {depvar}
 [{indepvars}] {ifin} {weight} {cmd:,}
+{cmdab:id(}{varname}{cmd:)}
 {cmdab:gr:oup(}{varname}{cmd:)}
 {cmdab:rand:(}{varlist}{cmd:)}
 {cmdab:alt:ernatives(}{varname}{cmd:)}
 [{opth base:alternative(#)}
  {opt nocons:tant}
- {opth id(varname)}
  {opth cl:uster(varname)}
  {opt r:obust}
  {opth ln(#)}
@@ -31,7 +31,6 @@
 {newvar} {ifin}
 [{cmd:,} 
  {opt proba}
- {opt xb}
  {opth nrep(#)} 
  {opth burn(#)}]
 
@@ -61,7 +60,7 @@ but they are interpreted to apply to decision-makers, not to individual observat
 {cmd:mixrandregret} utilizes the mixed random regret minimization model described in {help mixrandregret##hensher2016:Hensher et al. (2016)}, which is a mixed version of the classic random regret minimization model introduced in {help mixrandregret##chorus2010:Chorus. C. (2010)}. {cmd:mixrandregret} extends the {cmd:randregret} ({help mixrandregret##gutierrez2021:Gutiérrez-Vargas et al, 2021}) and allows to specify normal and log-normally distributed taste parameters inside the regret function. The command uses maximum simulated likelihood for estimation ({help mixrandregret##train2003:Train. K., 2003}). 
 
 {pstd}
-{cmd:mixrpred} can be used following {cmd:mixrandregret} to obtain the predicted probabilities or the predicted systematic regret. 
+{cmd:mixrpred} can be used following {cmd:mixrandregret} to obtain the predicted probabilities. 
 
 {pstd}
 {cmd:mixrbeta} can be used following {cmd:mixrandregret} to calculate
@@ -77,15 +76,13 @@ file specified by the user.
 {synopthdr :mixrandregret}
 {synoptline}
 {syntab:Model}
+{p2coldent :* {opth id(varname)}} is required and specifies a numeric identifier variable for the decision makers.{p_end}
 {p2coldent :* {opth gr:oup(varname)}} is required and specifies a numeric identifier variable ({it:varname}) for the choice occasions.{p_end}
 {p2coldent :* {opth rand:(varlist)}} is required and specifies the independent variables whose coefficients are random. The random coefficients can be specified to be normally or lognormally distributed (see the ln() option). The variables immediately following the dependent variable in the syntax are specified to have fixed coefficients.{p_end}
 {p2coldent :* {opth alt:ernatives(varname)}} use {it:varname} to identify the
         alternatives available for each case.{p_end}
 {synopt:{opth base:alternative(#)}} sets base Alternative Specific Constants (ASC).{p_end}
 {synopt:{opt nocons:ant}} suppress the alternative specific constants.{p_end}
-{synopt:{opth id(varname)}} specifies a numeric identifier variable for the decision
-makers. This option should be specified only when each individual performs
-several choices; i.e., the dataset is a panel.{p_end}
 {synopt :{opt r:obust}, {opt cl:uster}} see {help estimation options}. The cluster variable must be numeric.{p_end}
 {synopt:{opth ln(#)}} specifies that the last {it:#} variables in {opt rand()} have lognormally rather than normally distributed coefficients. The default is {cmd:ln(0)}.{p_end}
 
@@ -113,8 +110,7 @@ Specifying this option helps reduce the correlation between the sequences in eac
 {synoptset 23 tabbed}{...}
 {synopthdr :mixrpred}
 {synoptline}
-{synopt : {opt proba}} calculate probability of a positive outcome; the default{p_end}
-{synopt : {opt xb}} calculate linear prediction of the systematic regret{p_end}
+{synopt : {opt proba}} calculate the choice probabilities; the default{p_end}
 {synopt :{opth nrep(#)}} specifies the number of Halton draws used for the simulation. The default is {cmd:nrep(50)}.{p_end}
 {synopt :{opth burn(#)}} specifies the number of initial sequence elements to drop when creating the Halton sequences. The default is {cmd:burn(15)}.
  Specifying this option helps reduce the correlation between the sequences in each dimension.{p_end}
@@ -184,11 +180,6 @@ An example of setting starting values (2 parameters from fixed effects, 2 parame
 Predict choice probabilities and save values in a variable named {cmd:p}:
 
 {phang2}{cmd:. mixrpred p, proba}{p_end}
-
-{pstd}
-Linear prediction of the systematic regret and save values in a variable named {cmd:regret}:
-
-{phang2}{cmd:. mixrpred regret, xb}{p_end}
 
 {pstd}
 Obtain the individual-level parameters, generate the plot, and save in the file named {cmd:ind_rnd}:
