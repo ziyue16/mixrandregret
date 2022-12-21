@@ -9,9 +9,8 @@ d mixrandregret extends the randregret  (Gutiérrez-Vargas et al, 2021) and
 d allows to specify normal and log-normally distributed taste parameters 
 d inside the regret function. The command uses maximum simulated likelihood
 d  for estimation (Train. K., 2003). Users can obtain the predicted 
-d probabilities and predicted regret from the model using the mixrpred 
-d command. Individual-level parameters can also be obtained using the mixrbeta
-d command.
+d probabilities from the model using the mixrpred command. Individual-level 
+d parameters can also be obtained using the mixrbeta command.
 d
 d
 d KW: random regret minimization
