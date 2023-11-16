@@ -22,11 +22,12 @@
 ### UPDATE: ```mixrandregret``` is uploaded to the SSC Archive
 
 ``` 
+*Install mixrandregret using ssc download
 ssc install mixrandregret
 ```
 
 
-### Install ```mixrandregret``` 
+### Install ```mixrandregret``` from Github
 
 ``` 
 *Describe mixrandregret
