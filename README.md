@@ -19,6 +19,13 @@
 ```mixrandregret``` command utilizes the mixed random regret minimization model described in Hensher et al. (2016), which is a mixed version of the classic random regret minimization model introduced in Chorus. C. (2010). ```mixrandregret``` extends the ```randregret```  (Gutiérrez-Vargas et al, 2021) and allows to specify normal and log-normally distributed taste parameters inside the regret function. The command uses maximum simulated likelihood for estimation (Train. K., 2003). Users can obtain the predicted probabilities from the model using the ```mixrpred``` command. Individual-level parameters can also be obtained using the ```mixrbeta``` command.
 
 
+### UPDATE: ```mixrandregret``` is uploaded to the SSC Archive
+
+``` 
+ssc install mixrandregret
+```
+
+
 ### Install ```mixrandregret``` 
 
 ``` 
